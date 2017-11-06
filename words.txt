@@ -16248,7 +16248,7 @@ contriving
 control
 controllable
 controlled
-backend.controller
+controller
 controlling
 controversial
 controversially
@@ -32150,7 +32150,7 @@ mockingly
 mod
 modal
 mode
-backend.model
+model
 modelled
 modelling
 modem
@@ -33061,7 +33061,7 @@ nesting
 nestle
 nestled
 nestling
-backend.net
+net
 nether
 nethermost
 netted
@@ -49884,7 +49884,7 @@ videotaped
 videotaping
 vie
 vied
-backend.view
+view
 viewed
 viewer
 viewfinder

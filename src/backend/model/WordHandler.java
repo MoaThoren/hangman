@@ -32,5 +32,4 @@ public class WordHandler {
         int randomNum = ThreadLocalRandom.current().nextInt(0, words.length);
         return words[randomNum];
     }
-
 }
