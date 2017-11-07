@@ -1,4 +1,4 @@
-package frontend.view;
+package client.view;
 
 public class View {
 }

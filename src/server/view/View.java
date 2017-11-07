@@ -1,7 +1,7 @@
-package backend.view;
+package server.view;
 
-import backend.controller.Controller;
-import backend.model.Person;
+import server.controller.Controller;
+import server.model.Person;
 
 public class View {
 
