@@ -1,7 +1,6 @@
 
 *.class
 *.xml
-.idea/workspace.xml
-*.xml
 *.xml___jb_tmp___
 *.ser
+.idea/workspace.xml
