@@ -1,4 +1,4 @@
-package frontend.viewmodel;
+package client.viewmodel;
 
 public class ViewModel {
 }

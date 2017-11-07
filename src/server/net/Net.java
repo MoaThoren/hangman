@@ -1,4 +1,5 @@
-package frontend.net;
+package server.net;
 
 public class Net {
+
 }

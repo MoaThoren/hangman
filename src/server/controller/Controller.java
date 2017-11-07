@@ -1,8 +1,8 @@
-package backend.controller;
+package server.controller;
 
-import backend.model.Person;
-import backend.model.WordHandler;
-import backend.model.LeaderboardAccess;
+import server.model.Person;
+import server.model.WordHandler;
+import server.model.LeaderboardAccess;
 
 public class Controller {
     private WordHandler wordHandler;

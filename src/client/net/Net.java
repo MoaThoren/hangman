@@ -1,5 +1,4 @@
-package backend.net;
+package client.net;
 
 public class Net {
-
 }
