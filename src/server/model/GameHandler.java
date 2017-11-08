@@ -1,15 +1,14 @@
-package client;
+package server.model;
 
-public class TempServer {
+public class GameHandler{
     private String[] wordArray = new String[1];
     private int bodyParts = 0;
     private int score = 0;
     WordHandler wh = new WordHandler();
     private String word = wh.randomWord();
 
-
-    public TempServer(){
-        System.out.println("Temp server started.");
+    public GameHandler(){
+        System.out.println("Game handler started.");
         newWord();
         System.out.println("The word is " + word.length() + " characters long, meaning you have " + word.length() + " tries. (" + word + ")\n");
     }
@@ -32,22 +31,22 @@ public class TempServer {
                 errors++;
             }
         }
-        if(errors > 0){
+        if(errors > 0){         //INCORRECT LETTER(S)
           bodyParts = bodyParts - errors;
-          ret = ret + ("Oh no! You lost " + errors + " body part(s)! You now have " + bodyParts + " body parts left. \n");
+          ret = ret + ("Oh no! You lost " + errors + " body part(s)! \nYou now have " + bodyParts + " body parts left. \n");
         }
 
-        if(wordDone()){
+        if(wordDone()){         //WORD CORRECTLY GUESSED
             score++;
             ret = ret + ("Good job! The word was " + arrToString() + "! \nCurrent score: " + score + ". \n");
             ret = ret + newWord();
         }
-        else{
+        else{                   //SHOWS STATUS
             ret = ret + (arrToString());
         }
 
-        if(bodyParts <= 0){
-            ret = ret + ("Ouch! You haven't got any body parts left!  \n");
+        if(bodyParts <= 0){     //IF YOU'RE DEAD
+            ret = ("Ouch! You haven't got any body parts left!  \n");
             ret = ret + newWord();
         }
 
@@ -81,6 +80,6 @@ public class TempServer {
             wordArray[i] = "-";
         }
         bodyParts = word.length();
-        return ("The word is " + word.length() + " characters long, meaning you have " + word.length() + " tries. (" + word + ")\n");
+        return ("\nThe new word is " + word.length() + " characters long, meaning you have " + word.length() + " tries. (" + word + ")\n");
     }
 }
