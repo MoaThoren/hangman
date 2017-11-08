@@ -2,19 +2,31 @@ package server.net;
 
 import server.controller.Controller;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+/**
+ * Class for running the net layer of the server.
+ * Handles the sockets for the client and server on the server side, and then lies waiting for connections.
+ * Each transmission is served in its own thread and is handled using the <code>checkString</code> method in
+ * the controller.
+ */
 public class Net {
     private int PORT_NUMBER = 5555;
     private int LINGER_TIME = 5000;
-    private File rootDir = new File("/");
+    private Controller controller = new Controller();
     private ServerSocket serverSocket;
     private PrintWriter output;
     private BufferedReader input;
-    private Controller controller = new Controller();
 
+    /**
+     * Creates/assigns a socket for the server and then opens a new client socket for each incoming transmission.
+     * @param args
+     */
     public void main(String[] args) {
         try {
             serverSocket = new ServerSocket(PORT_NUMBER);
