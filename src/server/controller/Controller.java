@@ -32,4 +32,10 @@ public class Controller {
     public String randomWord() {
         return wordHandler.randomWord();
     }
+
+    public String checkString(String letters) {
+        return "";
+    }
+
+
 }
