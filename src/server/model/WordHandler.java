@@ -6,9 +6,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 
+/**
+ * Class for requesting a random word from a (at start-up) loaded text file.
+ */
 public class WordHandler {
     private String[] words;
 
+    /**
+     * Constructor starting the class by loading the dictionary.
+     */
     public WordHandler() {
         createList();
     }
@@ -28,6 +34,11 @@ public class WordHandler {
             e.printStackTrace();
         }
     }
+
+    /**
+     * Ask for a random word in the dictionary.
+     * @return A <code>String</code> with a random word.
+     */
     public String randomWord() {
         int randomNum = ThreadLocalRandom.current().nextInt(0, words.length);
         return words[randomNum];
