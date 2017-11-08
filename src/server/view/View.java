@@ -3,6 +3,9 @@ package server.view;
 import server.controller.Controller;
 import server.model.Person;
 
+/**
+ * Temp class for testing the <code>WordHandler</code> and <code>LeaderboardAccess</code> classes.
+ */
 public class View {
 
     private Controller controller;

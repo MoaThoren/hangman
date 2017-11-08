@@ -3,9 +3,18 @@ package server.model;
 import java.io.*;
 import java.util.ArrayList;
 
+/**
+ * Class for handling the leaderboard.
+ */
 public class LeaderboardAccess {
+
+    // ArrayList containing all leaderboard entries.
     private ArrayList<Person> leaderboard;
 
+    /**
+     * Constructor which in case of no previous leaderboard creates a new one,
+     * if there already existed a previous one it loads that one instead.
+     */
     public LeaderboardAccess() {
         File f = new File("leaderboard.ser");
         if (f.isFile()) {
@@ -16,6 +25,12 @@ public class LeaderboardAccess {
         } else  leaderboard = new ArrayList<>();
     }
 
+    /**
+     * Call to add a new person to the leaderboard. If person already has played the game
+     * and has either won or lost, call <code>updateScore</code> instead.
+     * If person already exists, nothing happens.
+     * @param name The name of the person to be added to the leaderboard
+     */
     public void addScore(String name) {
         int PersonInt = search(name);
         if(PersonInt == -1) leaderboard.add(new Person(name));
@@ -23,6 +38,11 @@ public class LeaderboardAccess {
         save();
     }
 
+    /**
+     * Call to update or add the score of a person who has played the game.
+     * @param name Name of the person.
+     * @param won <code>Boolean</code> of win status, <code>true</code> for victory and <code>false</code> for loss.
+     */
     public void updateScore(String name, boolean won) {
         int personInt = search(name);
         if(personInt != -1)   updateEntry(personInt, won);
@@ -54,6 +74,12 @@ public class LeaderboardAccess {
         return -1;
     }
 
+    /**
+     * Search for a person in the leaderboard and get a <code>String</code> with the current status in return.
+     * @param name The name of the person, case-insensitive.
+     * @return A <code>String</code> either stating the score in the format "<code>name</code> has <code>score</code> points."
+     * Or "<code>name</code> has no score yet :(" if name isn't found.
+     */
     public String searchName(String name) {
         for (Person person:leaderboard) {
             if(person.name.equalsIgnoreCase(name)) {
@@ -63,6 +89,10 @@ public class LeaderboardAccess {
         return name + " has no score yet :(";
     }
 
+    /**
+     * Call to get the entire leaderboard returned.
+     * @return An <code>Array</code> containing objects of the <code>Person</code> class.
+     */
     public Person[] returnAll() {
         return leaderboard.toArray(new Person[0]);
     }
