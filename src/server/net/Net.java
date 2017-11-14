@@ -27,13 +27,14 @@ public class Net {
      * Creates/assigns a socket for the server and then opens a new client socket for each incoming transmission.
      * @param args
      */
-    public void main(String[] args) {
+    public static void main(String[] args) {
+        Net net = new Net();
         try {
-            serverSocket = new ServerSocket(PORT_NUMBER);
+            net.serverSocket = new ServerSocket(net.PORT_NUMBER);
         } catch (IOException e) {
             System.exit(1);
         }
-        newClientSocket();
+        net.newClientSocket();
     }
 
     private void newClientSocket() {
