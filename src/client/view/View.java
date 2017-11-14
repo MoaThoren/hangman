@@ -14,7 +14,11 @@ public class View {
 
     public static void main(String[] args) {
         View view = new View();
-        view.SERVER_IP = args[0].trim();
+        try {
+            view.SERVER_IP = args[0].trim();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            System.out.println("No host IP argument, reverting to localhost...");
+        }
         view.welcome();
         view.gameCommunication(view.SERVER_IP);
     }
