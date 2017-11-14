@@ -5,7 +5,5 @@ package client.net;
  */
 public interface Messagehandler {
 
-    public handleMessage(String message) {
-
-    }
+    public void handleMessage(String message);
 }
