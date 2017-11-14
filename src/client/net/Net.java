@@ -1,6 +1,5 @@
 package client.net;
 
-import com.sun.corba.se.impl.protocol.giopmsgheaders.MessageHandler;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -18,7 +17,7 @@ public class Net {
     private String disconnectMessage = "exit-game";
 
 
-    public void newConnection(String host, MessageHandler messageHandler) throws IOException {
+    public void newConnection(String host, Messagehandler messageHandler) throws IOException {
         socket = new Socket();
         socket.connect(new InetSocketAddress(host, port), TIME_OUT_ONE_MINUTE);
         boolean autoflush = true;
@@ -40,25 +39,22 @@ public class Net {
     }
 
     private class Listener implements Runnable {
-        private MessageHandler messageHandler;
+        private Messagehandler messageHandler;
 
-        private Listener(MessageHandler messageHandler) {
+        private Listener(Messagehandler messageHandler) {
             this.messageHandler = messageHandler;
         }
 
 
         @Override
         public void run() {
-
+            try {
+                for(;;) {
+                    messageHandler.handleMessage(receivedMessage.readLine());
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-
-
-                (;;)
-
-        private Listener() {
-
-        }
-
-
     }
 }
