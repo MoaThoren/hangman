@@ -1,18 +1,32 @@
 package client.view;
 import client.controller.Controller;
-import server.model.GameHandler;
+import client.net.Messagehandler;
 
 import java.util.Scanner;
 
 public class View {
     private Controller controller = new Controller();
+    private Messagehandler messagehandler = new Messagehandler() {
+        @Override
+        public void handleMessage(String message) {
+
+        }
+    };
+    private String host = "";
     public static void main(String[] args) {
-        new View().gameCommunication();
+        View view = new View();
+        System.out.println("*** Welcome to hangman ***");
+        if(args[0].trim().isEmpty()) {
+            System.out.println("No host IP given, please launch with IP argument.");
+            System.exit(1);
+        }
+        view.gameCommunication(view.host = args[0]);
     }
 
-    private void gameCommunication(){
+    private void gameCommunication(String host){
         boolean exit = false;
         Scanner sc = new Scanner(System.in);
+        controller.newConnection(host, messagehandler);
 
         while(!exit){
             String in = sc.next().toLowerCase();
