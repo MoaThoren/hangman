@@ -12,14 +12,16 @@ public class Net {
     private Socket socket;
     private PrintWriter sentMessage;
     private BufferedReader receivedMessage;
-    private int port = 5555;
-    private static final int TIME_OUT_ONE_MINUTE = 60000;
-    private String disconnectMessage = "exit-game";
+    private boolean connected = false;
+    private final int PORT_NUMBER = 5555;
+    private final int TIME_OUT_ONE_MINUTE = 60000;
+    private final String DISCONNECT_MESSAGE = "exit-game";
 
 
     public void newConnection(String host, Messagehandler messageHandler) throws IOException {
         socket = new Socket();
-        socket.connect(new InetSocketAddress(host, port), TIME_OUT_ONE_MINUTE);
+        socket.connect(new InetSocketAddress(host, PORT_NUMBER), TIME_OUT_ONE_MINUTE);
+        connected = true;
         boolean autoflush = true;
         sentMessage = new PrintWriter(socket.getOutputStream(), autoflush);
         receivedMessage = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -28,7 +30,10 @@ public class Net {
     }
 
     public void disconnect() throws IOException {
-        sendMessage(disconnectMessage);
+        connected = false;
+        sendMessage(DISCONNECT_MESSAGE);
+        receivedMessage.close();
+        sentMessage.close();
         socket.close();
         socket = null;
 
@@ -48,13 +53,15 @@ public class Net {
 
         @Override
         public void run() {
-            try {
-                for(;;) {
-                    messageHandler.handleMessage(receivedMessage.readLine());
+                while(connected) {
+                    try {
+                        String recieved = receivedMessage.readLine();
+                        if(!(recieved == null))
+                            messageHandler.handleMessage(recieved);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
     }
 }

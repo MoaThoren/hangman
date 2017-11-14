@@ -45,7 +45,7 @@ public class View {
                         System.out.println("Failed to disconnect.");
                         e.printStackTrace();
                     }
-                    System.out.println("Good bye!");
+                    System.out.println("Exiting game, goodbye!");
                     break gameLoop;
             }
         }

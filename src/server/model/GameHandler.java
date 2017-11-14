@@ -1,18 +1,23 @@
 package server.model;
 
 public class GameHandler{
+    private LeaderboardAccess leaderboardAccess = new LeaderboardAccess();
+    private WordHandler wh = new WordHandler();
+    private String word = wh.randomWord();
     private String[] wordArray = new String[1];
+    private String name = "";
     private int bodyParts = 0;
     private int score = 0;
-    WordHandler wh = new WordHandler();
-    private String word = wh.randomWord();
 
     public GameHandler(){
-        System.out.println("Game handler started.");
         newWord();
-        System.out.println("The word is " + word.length() + " characters long, meaning you have " + word.length() + " tries. (" + word + ")\n");
     }
 
+    public String newGame(String name) {
+        this.name = name;
+        leaderboardAccess.addScore(name);
+        return "The word is " + word.length() + " characters long, meaning you have " + word.length() + " tries. (" + word + ")";
+    }
 
     public String guessWord(String s){
         String ret = "";
@@ -33,12 +38,12 @@ public class GameHandler{
         }
         if(errors > 0){         //INCORRECT LETTER(S)
           bodyParts = bodyParts - errors;
-          ret = ret + ("Oh no! You lost " + errors + " body part(s)! \nYou now have " + bodyParts + " body parts left. \n");
+          ret = ret + ("Oh no! You lost " + errors + " body part(s)! \nYou now have " + bodyParts + " body parts left.");
         }
 
         if(wordDone()){         //WORD CORRECTLY GUESSED
             score++;
-            ret = ret + ("Good job! The word was " + arrToString() + "! \nCurrent score: " + score + ". \n");
+            ret = ret + ("Good job! The word was " + arrToString() + "! \nCurrent score: " + score + ".");
             ret = ret + newWord();
         }
         else{                   //SHOWS STATUS
@@ -46,7 +51,7 @@ public class GameHandler{
         }
 
         if(bodyParts <= 0){     //IF YOU'RE DEAD
-            ret = ("Ouch! You haven't got any body parts left!  \n");
+            ret = ("Ouch! You haven't got any body parts left!");
             ret = ret + newWord();
         }
 
@@ -55,10 +60,7 @@ public class GameHandler{
 
     private Boolean wordDone(){
         for(int i = 0; i < wordArray.length ; i++) {
-            if(wordArray[i] == "-"){
-                return false;
-            }
-            if(bodyParts <= 0){
+            if(wordArray[i].equals("-") || bodyParts <= 0) {
                 return false;
             }
         }
@@ -66,11 +68,11 @@ public class GameHandler{
     }
 
     private String arrToString(){
-        String s = "";
-        for(int i = 0; i < wordArray.length; i++) {
-            s = s + wordArray[i];
+        StringBuilder s = new StringBuilder();
+        for (String word : wordArray) {
+            s.append(word);
         }
-        return s;
+        return s.toString();
     }
 
     private String newWord(){

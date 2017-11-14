@@ -1,11 +1,13 @@
 package server.controller;
 
+import server.model.GameHandler;
 import server.model.Person;
 import server.model.WordHandler;
 import server.model.LeaderboardAccess;
 
 public class Controller {
     private WordHandler wordHandler;
+    private GameHandler gameHandler;
     private LeaderboardAccess leaderboardAccess;
 
     public Controller() {
@@ -29,12 +31,13 @@ public class Controller {
         return leaderboardAccess.returnAll();
     }
 
-    public String randomWord() {
-        return wordHandler.randomWord();
+    public String newGame(String name) {
+        gameHandler = new GameHandler();
+        return gameHandler.newGame(name);
     }
 
     public String checkString(String letters) {
-        return "";
+        return gameHandler.guessWord(letters);
     }
 
 

@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 
 /**
  * Class for running the net layer of the server.
@@ -18,6 +19,7 @@ import java.net.Socket;
 public class Net {
     private final int PORT_NUMBER = 5555;
     private final int LINGER_TIME = 5000;
+    private boolean connected = false;
     private Controller controller = new Controller();
     private ServerSocket serverSocket;
     private PrintWriter output;
@@ -34,6 +36,7 @@ public class Net {
         } catch (IOException e) {
             System.exit(1);
         }
+        System.out.println("Server socket created.");
         net.newClientSocket();
     }
 
@@ -46,11 +49,9 @@ public class Net {
 
         public void run() {
             try {
-                clientSocket = serverSocket.accept();
-                newClientSocket();
-                clientSocket.setSoLinger(true, LINGER_TIME);
-                output = new PrintWriter(clientSocket.getOutputStream(),true);
-                input = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                waitForConnection();
+                connected();
+                setupCommunication();
                 receive();
             } catch (IOException e) {
                 System.exit(1);
@@ -63,20 +64,66 @@ public class Net {
             }
         }
 
+        private void waitForConnection() throws IOException {
+            System.out.println("Server going into waiting on client socket acceptance");
+            clientSocket = serverSocket.accept();
+        }
+
+        private void connected() throws SocketException {
+            connected = true;
+            System.out.println("Client connection found.");
+            clientSocket.setSoLinger(true, LINGER_TIME);
+        }
+
+        private void setupCommunication() throws IOException {
+            output = new PrintWriter(clientSocket.getOutputStream(),true);
+            input = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+        }
+
         private void receive() {
-            while(true) {
+            send("Please enter your name to begin:\n");
+            try {
+                String reply = controller.checkString(input.readLine());
+                if(!checkForExit(reply)) {
+                    send(controller.newGame(reply));
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            System.out.println("Starting to wait for messages...");
+            while(connected) {
+                System.out.println("Checking for new messages...");
+                String reply = "";
                 try {
-                    String reply = controller.checkString(input.readLine());
-                    if(reply.equalsIgnoreCase("exit-game")) break;
-                    send(reply);
+                    reply = controller.checkString(input.readLine());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+                if(checkForExit(reply))
+                    break;
+                send(reply);
             }
         }
 
+        private boolean checkForExit(String reply) {
+            if(reply.equalsIgnoreCase("exit-game")) {
+                System.out.println("Client requested to exit the game.");
+                connected = false;
+                try {
+                    clientSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                newClientSocket();
+                return true;
+            }
+            return false;
+        }
+
         private void send(String reply) {
+            System.out.println("Sending reply...");
             output.println(reply);
+            System.out.println("The reply \"" + reply + "\" is sent!");
         }
     }
 }

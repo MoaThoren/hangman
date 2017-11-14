@@ -34,7 +34,6 @@ public class LeaderboardAccess {
     public void addScore(String name) {
         int PersonInt = search(name);
         if(PersonInt == -1) leaderboard.add(new Person(name));
-        else    System.out.println("Exists already");
         save();
     }
 
