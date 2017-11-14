@@ -36,14 +36,11 @@ public class Net {
     }
 
     public void sendMessage(String message) {
-        if(Socket == null) {
-            newConnection();
-        }
-        sentMessage.println(message);
+               sentMessage.println(message);
     }
 
     private class Listener implements Runnable {
-        private final MessageHandler messageHandler;
+        private MessageHandler messageHandler;
 
         private Listener(MessageHandler messageHandler) {
             this.messageHandler = messageHandler;
