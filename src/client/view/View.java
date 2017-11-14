@@ -1,19 +1,18 @@
 package client.view;
+import client.controller.Controller;
 import server.model.GameHandler;
 
 import java.util.Scanner;
 
 public class View {
+    private Controller controller = new Controller();
     public static void main(String[] args) {
-        gameCommunication();
+        new View().gameCommunication();
     }
 
-    public static void gameCommunication(){
+    private void gameCommunication(){
         boolean exit = false;
         Scanner sc = new Scanner(System.in);
-
-        //TEMP
-        GameHandler gh = new GameHandler();
 
         while(!exit){
             String in = sc.next().toLowerCase();
@@ -25,7 +24,7 @@ public class View {
                 default:
                     if(!exit){
                         //PASS ON TO SERVER AND GET RESPONSE
-                        System.out.println(gh.guessWord(in));
+                        controller.guessWord(in);
 
                     }
             }
