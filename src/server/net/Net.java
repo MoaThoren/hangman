@@ -16,8 +16,8 @@ import java.net.Socket;
  * the controller.
  */
 public class Net {
-    private int PORT_NUMBER = 5555;
-    private int LINGER_TIME = 5000;
+    private final int PORT_NUMBER = 5555;
+    private final int LINGER_TIME = 5000;
     private Controller controller = new Controller();
     private ServerSocket serverSocket;
     private PrintWriter output;
@@ -25,7 +25,7 @@ public class Net {
 
     /**
      * Creates/assigns a socket for the server and then opens a new client socket for each incoming transmission.
-     * @param args
+     * @param args Optional arguments.
      */
     public static void main(String[] args) {
         Net net = new Net();
@@ -80,4 +80,3 @@ public class Net {
         }
     }
 }
-z
