@@ -24,8 +24,6 @@ class Net {
     private final String FORCE_EXIT_MESSAGE = "force close game";
     private boolean connected = false;
     private ServerSocket serverSocket;
-    private PrintWriter output;
-    private BufferedReader input;
 
     /**
      * Creates/assigns a socket for the server and then opens a new client socket for each incoming transmission.
@@ -50,26 +48,26 @@ class Net {
     }
 
     private void newClientSocket() {
-        System.out.println("New thread");
         new NetThread().start();
-        System.out.println("After new thread");
     }
 
     private class NetThread extends Thread {
         private Socket clientSocket;
         private Controller controller;
+        private PrintWriter output;
+        private BufferedReader input;
 
         NetThread() {
             try {
                 controller = new Controller();
             } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
                 System.out.println("Couldn't create controller. System shutting down.");
                 System.exit(1);
             }
         }
 
         public void run() {
-            System.out.println("Inside new run.");
             try {
                 waitForConnection();
                 connected();
@@ -117,6 +115,9 @@ class Net {
             } catch (ClassNotFoundException e) {
                 System.out.println("Couldn't load leaderboard, try deleting the \"leaderboard.ser\" file and try again.");
                 System.exit(1);
+            } catch (NullPointerException e) {
+                System.out.println("Weird exit.");
+                checkForExit(FORCE_EXIT_MESSAGE);
             }
             System.out.println("Starting to wait for messages...");
             while (connected) {
@@ -134,6 +135,7 @@ class Net {
                         break;
                     send(controller.checkString(reply));
                     System.out.println("This is the word: " + controller.getWord());
+                    System.out.println("*************************************************************");
                 } catch (IOException e) {
                     System.out.println("Didn't manage to read from or write to leaderboard.");
                     System.exit(1);
@@ -145,6 +147,7 @@ class Net {
         }
 
         private void send(String reply) {
+            System.out.println("*************************************************************");
             System.out.println("Sending reply...");
             output.println(reply);
             System.out.println("The reply \"" + reply + "\" is sent!");
