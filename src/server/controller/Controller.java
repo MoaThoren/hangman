@@ -32,4 +32,10 @@ public class Controller {
             gameHandler.didUserEscapeWord();
     }
 
+    public String getWord() {
+        if(gameHandler != null)
+            return gameHandler.getWord();
+        return "";
+    }
+
 }

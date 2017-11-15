@@ -19,7 +19,7 @@ public class GameHandler {
 
     public String newGame(String name) throws IOException {
         leaderboardAccess.addScore(name);
-        return "The word is " + word.length() + " characters long, meaning you have " + word.length() + " tries. (" + word + ")";
+        return "The word is " + word.length() + " characters long, meaning you have " + word.length() + " tries.";
     }
 
     public String guessWord(String s) throws IOException {
@@ -61,6 +61,10 @@ public class GameHandler {
         return ret;
     }
 
+    public String getWord() {
+        return word;
+    }
+
     private Boolean wordDone() {
         for (String aWordArray : wordArray) {
             if (aWordArray.equals("-") || bodyParts <= 0) {
@@ -90,6 +94,6 @@ public class GameHandler {
             wordArray[i] = "-";
         }
         bodyParts = word.length();
-        return ("\nThe new word is " + word.length() + " characters long, meaning you have " + word.length() + " tries. (" + word + ")");
+        return ("\nThe new word is " + word.length() + " characters long, meaning you have " + word.length() + " tries.");
     }
 }
