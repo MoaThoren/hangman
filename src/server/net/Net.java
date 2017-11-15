@@ -106,6 +106,7 @@ class Net {
                 String reply = input.readLine();
                 if (!checkForExit(reply)) {
                     send(controller.newGame(reply));
+                    System.out.println("This is the word: " + controller.getWord());
                 }
             } catch (IOException e) {
                 System.out.println("Couldn't get a reply, client probably disconnected...\nRestarting connection...");
@@ -129,6 +130,7 @@ class Net {
                     if (checkForExit(reply))
                         break;
                     send(controller.checkString(reply));
+                    System.out.println("This is the word: " + controller.getWord());
                 } catch (IOException e) {
                     System.out.println("Didn't manage to read from or write to leaderboard.");
                     System.exit(1);
