@@ -3,14 +3,17 @@ package server.model;
 import java.io.IOException;
 
 public class GameHandler {
-    private final LeaderboardAccess leaderboardAccess = new LeaderboardAccess();
-    private final WordHandler wh = new WordHandler();
-    private String word = wh.randomWord();
+    private LeaderboardAccess leaderboardAccess;
+    private WordHandler wh;
+    private String word;
     private String[] wordArray = new String[1];
     private int bodyParts = 0;
     private boolean gameInProgress = false;
 
-    public GameHandler() {
+    public GameHandler() throws IOException, ClassNotFoundException {
+        leaderboardAccess = new LeaderboardAccess();
+        wh = new WordHandler();
+        word  = wh.randomWord();
         newWord();
     }
 
@@ -37,7 +40,7 @@ public class GameHandler {
         }
         if (errors > 0) {         //INCORRECT LETTER(S)
             bodyParts = bodyParts - errors;
-            ret = ret + ("Oh no! You lost " + errors + " body part(s)! \nYou now have " + bodyParts + " body parts left.");
+            ret = ret + ("Oh no! You lost " + errors + " body part(s)! \nYou now have " + bodyParts + " body parts left.\n");
         }
 
         if (wordDone()) {         //WORD CORRECTLY GUESSED

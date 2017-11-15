@@ -10,6 +10,7 @@ class View {
     private final Controller controller = new Controller();
     private final String WELCOME_MESSAGE = "*** Welcome to hangman ***";
     private final String NO_IP_MESSAGE = "No host IP given, please launch with IP argument. E.g. > java hangman 127.0.0.1";
+    private final String EXIT_MESSAGE = "exit game";
     private final MessageHandler messageHandler = this::printOut;
     private String SERVER_IP = "127.0.0.1";
 
@@ -36,9 +37,10 @@ class View {
 
         gameLoop:
         while (true) {
-            String input = sc.next().toLowerCase();
+            String input = sc.nextLine().toLowerCase();
+            System.out.println("input: " + input);
             switch (input) {
-                case "exit-game":
+                case EXIT_MESSAGE:
                     try {
                         controller.disconnect();
                     } catch (IOException e) {

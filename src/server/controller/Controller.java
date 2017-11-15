@@ -14,7 +14,7 @@ public class Controller {
         leaderboardAccess = new LeaderboardAccess();
     }
 
-    public String newGame(String name) throws IOException {
+    public String newGame(String name) throws IOException, ClassNotFoundException {
         gameHandler = new GameHandler();
         return gameHandler.newGame(name);
     }

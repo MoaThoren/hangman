@@ -9,6 +9,7 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 
 /**
  * Class for running the net layer of the server.
@@ -50,6 +51,7 @@ class Net {
     private void newServerSocket() {
         try {
             this.serverSocket = new ServerSocket(this.PORT_NUMBER);
+            this.serverSocket.setSoTimeout(LINGER_TIME);
         } catch (IOException e) {
             System.out.println("Couldn't create a new server socket, exiting...");
             System.exit(1);
@@ -70,7 +72,10 @@ class Net {
                 connected();
                 setupCommunication();
                 receive();
-            } catch (IOException e) {
+            } catch (SocketTimeoutException e) {
+                System.out.println("Connection timed out, no client connected within " + LINGER_TIME/1000 + " s.");
+                System.exit(0);
+            } catch (IOException e1) {
                 System.out.println("Something went wrong during connection startup, please restart the server.");
                 System.exit(1);
             } finally {
@@ -104,6 +109,9 @@ class Net {
             } catch (IOException e) {
                 System.out.println("Couldn't get a reply, client probably disconnected...\nRestarting connection...");
                 checkForExit(FORCE_EXIT_MESSAGE);
+            } catch (ClassNotFoundException e) {
+                System.out.println("Couldn't load leaderboard, try deleting the \"leaderboard.ser\" file and try again.");
+                System.exit(1);
             }
             System.out.println("Starting to wait for messages...");
             while (connected) {
