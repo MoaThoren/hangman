@@ -1,44 +1,35 @@
 package server.controller;
 
 import server.model.GameHandler;
-import server.model.Person;
-import server.model.WordHandler;
 import server.model.LeaderboardAccess;
+import server.model.Person;
+
+import java.io.IOException;
 
 public class Controller {
-    private WordHandler wordHandler;
     private GameHandler gameHandler;
     private LeaderboardAccess leaderboardAccess;
 
-    public Controller() {
-        wordHandler = new WordHandler();
+    public Controller() throws IOException, ClassNotFoundException {
         leaderboardAccess = new LeaderboardAccess();
     }
 
-    public void addScore(String name) {
-        leaderboardAccess.addScore(name);
+    public String newGame(String name) throws IOException {
+        gameHandler = new GameHandler();
+        return gameHandler.newGame(name);
     }
 
-    public void updateScore(String name, boolean won) {
-        leaderboardAccess.updateScore(name, won);
-    }
-
-    public String search(String name) {
-        return leaderboardAccess.searchName(name);
+    public String checkString(String letters) throws IOException {
+        return gameHandler.guessWord(letters);
     }
 
     public Person[] returnLeaderboard() {
         return leaderboardAccess.returnAll();
     }
 
-    public String newGame(String name) {
-        gameHandler = new GameHandler();
-        return gameHandler.newGame(name);
+    public void didUserEscapeWord() throws IOException {
+        if (gameHandler != null)
+            gameHandler.didUserEscapeWord();
     }
-
-    public String checkString(String letters) {
-        return gameHandler.guessWord(letters);
-    }
-
 
 }

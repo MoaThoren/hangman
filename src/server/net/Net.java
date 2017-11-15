@@ -16,28 +16,45 @@ import java.net.SocketException;
  * Each transmission is served in its own thread and is handled using the <code>checkString</code> method in
  * the controller.
  */
-public class Net {
+class Net {
     private final int PORT_NUMBER = 5555;
     private final int LINGER_TIME = 5000;
+    private final String EXIT_MESSAGE = "exit game";
+    private final String FORCE_EXIT_MESSAGE = "force close game";
     private boolean connected = false;
-    private Controller controller = new Controller();
+    private Controller controller = null;
     private ServerSocket serverSocket;
     private PrintWriter output;
     private BufferedReader input;
 
+    private Net() {
+        try {
+            controller = new Controller();
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("Couldn't create controller. System shutting down.");
+            System.exit(1);
+        }
+    }
+
     /**
      * Creates/assigns a socket for the server and then opens a new client socket for each incoming transmission.
+     *
      * @param args Optional arguments.
      */
     public static void main(String[] args) {
         Net net = new Net();
+        net.newServerSocket();
+        net.newClientSocket();
+    }
+
+    private void newServerSocket() {
         try {
-            net.serverSocket = new ServerSocket(net.PORT_NUMBER);
+            this.serverSocket = new ServerSocket(this.PORT_NUMBER);
         } catch (IOException e) {
+            System.out.println("Couldn't create a new server socket, exiting...");
             System.exit(1);
         }
         System.out.println("Server socket created.");
-        net.newClientSocket();
     }
 
     private void newClientSocket() {
@@ -54,18 +71,15 @@ public class Net {
                 setupCommunication();
                 receive();
             } catch (IOException e) {
+                System.out.println("Something went wrong during connection startup, please restart the server.");
                 System.exit(1);
             } finally {
-                try {
-                    clientSocket.close();
-                } catch(IOException ioEx) {
-                    System.exit(1);
-                }
+                closeClientSocket();
             }
         }
 
         private void waitForConnection() throws IOException {
-            System.out.println("Server going into waiting on client socket acceptance");
+            System.out.println("Server waiting on client socket acceptance");
             clientSocket = serverSocket.accept();
         }
 
@@ -76,54 +90,72 @@ public class Net {
         }
 
         private void setupCommunication() throws IOException {
-            output = new PrintWriter(clientSocket.getOutputStream(),true);
+            output = new PrintWriter(clientSocket.getOutputStream(), true);
             input = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         }
 
         private void receive() {
             send("Please enter your name to begin:\n");
             try {
-                String reply = controller.checkString(input.readLine());
-                if(!checkForExit(reply)) {
+                String reply = input.readLine();
+                if (!checkForExit(reply)) {
                     send(controller.newGame(reply));
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println("Couldn't get a reply, client probably disconnected...\nRestarting connection...");
+                checkForExit(FORCE_EXIT_MESSAGE);
             }
             System.out.println("Starting to wait for messages...");
-            while(connected) {
+            while (connected) {
                 System.out.println("Checking for new messages...");
-                String reply = "";
+                String reply;
                 try {
-                    reply = controller.checkString(input.readLine());
+                    reply = input.readLine();
                 } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                if(checkForExit(reply))
+                    System.out.println("Couldn't get a reply, client probably disconnected...\nRestarting connection...");
+                    checkForExit(FORCE_EXIT_MESSAGE);
                     break;
-                send(reply);
-            }
-        }
-
-        private boolean checkForExit(String reply) {
-            if(reply.equalsIgnoreCase("exit-game")) {
-                System.out.println("Client requested to exit the game.");
-                connected = false;
-                try {
-                    clientSocket.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
                 }
-                newClientSocket();
-                return true;
+                if (checkForExit(reply))
+                    break;
+                try {
+                    send(controller.checkString(reply));
+                } catch (IOException e) {
+                    System.out.println("Didn't manage to read from or write to leaderboard.");
+                    System.exit(1);
+                }
             }
-            return false;
         }
 
         private void send(String reply) {
             System.out.println("Sending reply...");
             output.println(reply);
             System.out.println("The reply \"" + reply + "\" is sent!");
+        }
+
+        private boolean checkForExit(String reply) {
+            if (reply.equalsIgnoreCase(EXIT_MESSAGE) || reply.equalsIgnoreCase(FORCE_EXIT_MESSAGE)) {
+                System.out.println("Client requested to " + reply);
+                connected = false;
+                try {
+                    controller.didUserEscapeWord();
+                } catch (IOException e) {
+                    System.out.println("Didn't manage to save the cheating users score, consider yourself lucky...");
+                }
+                closeClientSocket();
+                newClientSocket();
+                return true;
+            }
+            return false;
+        }
+
+        private void closeClientSocket() {
+            try {
+                clientSocket.close();
+            } catch (IOException ioEx) {
+                System.out.println("Couldn't close the client socket, shutting down.");
+                System.exit(1);
+            }
         }
     }
 }
