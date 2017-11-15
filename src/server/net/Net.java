@@ -19,7 +19,7 @@ import java.net.SocketTimeoutException;
  */
 class Net {
     private final int PORT_NUMBER = 5555;
-    private final int LINGER_TIME = 5000;
+    private final int LINGER_TIME = 0;
     private final String EXIT_MESSAGE = "exit game";
     private final String FORCE_EXIT_MESSAGE = "force close game";
     private boolean connected = false;
@@ -92,6 +92,7 @@ class Net {
             connected = true;
             System.out.println("Client connection found.");
             clientSocket.setSoLinger(true, LINGER_TIME);
+            newClientSocket();
         }
 
         private void setupCommunication() throws IOException {

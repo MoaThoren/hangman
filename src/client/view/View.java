@@ -38,7 +38,6 @@ class View {
         gameLoop:
         while (true) {
             String input = sc.nextLine().toLowerCase();
-            System.out.println("input: " + input);
             switch (input) {
                 case EXIT_MESSAGE:
                     try {
