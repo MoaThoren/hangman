@@ -11,13 +11,14 @@ public class LeaderboardAccess {
     // ArrayList containing all leaderboard entries.
     private ArrayList<Person> leaderboard;
     private int prevPersonInt = -1;
+    private String FILE_NAME = "leaderboard";
 
     /**
      * Constructor which in case of no previous leaderboard creates a new one,
      * if there already existed a previous one it loads that one instead.
      */
     public LeaderboardAccess() throws IOException, ClassNotFoundException {
-        File f = new File("leaderboard.ser");
+        File f = new File(FILE_NAME);
         if (f.isFile()) {
             long size = f.length();
             if (size != 0) {
@@ -103,7 +104,7 @@ public class LeaderboardAccess {
     }
 
     private void save() throws IOException {
-        FileOutputStream fos = new FileOutputStream("leaderboard.ser");
+        FileOutputStream fos = new FileOutputStream(FILE_NAME);
         ObjectOutputStream oos = new ObjectOutputStream(fos);
         oos.writeObject(leaderboard);
         oos.close();
@@ -111,7 +112,7 @@ public class LeaderboardAccess {
 
     @SuppressWarnings("unchecked")
     private void load() throws IOException, ClassNotFoundException {
-        FileInputStream fis = new FileInputStream("leaderboard.ser");
+        FileInputStream fis = new FileInputStream(FILE_NAME);
         ObjectInputStream ois = new ObjectInputStream(fis);
         leaderboard = (ArrayList<Person>) ois.readObject();
 
