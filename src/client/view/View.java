@@ -1,16 +1,18 @@
 package client.view;
+
 import client.controller.Controller;
-import client.net.Messagehandler;
+import client.net.MessageHandler;
 
 import java.io.IOException;
 import java.util.Scanner;
 
-public class View {
-    private Controller controller = new Controller();
-    private String WELCOME_MESSAGE = "*** Welcome to hangman ***";
-    private String NO_IP_MESSAGE = "No host IP given, please launch with IP argument. E.g. > java hangman 127.0.0.1";
+class View {
+    private final Controller controller = new Controller();
+    private final String WELCOME_MESSAGE = "*** Welcome to hangman ***";
+    private final String NO_IP_MESSAGE = "No host IP given, please launch with IP argument. E.g. > java hangman 127.0.0.1";
+    private final String EXIT_MESSAGE = "exit game";
+    private final MessageHandler messageHandler = this::printOut;
     private String SERVER_IP = "127.0.0.1";
-    private Messagehandler messagehandler = this::printOut;
 
     public static void main(String[] args) {
         View view = new View();
@@ -23,36 +25,39 @@ public class View {
         view.gameCommunication(view.SERVER_IP);
     }
 
-    private void gameCommunication(String host){
+    private void gameCommunication(String host) {
         Scanner sc = new Scanner(System.in);
         try {
-            controller.newConnection(host, messagehandler);
+            controller.newConnection(host, messageHandler);
             System.out.println("Connected to: " + host);
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Couldn't create a new connection...\nPlease restart client and try again.");
+            System.exit(1);
         }
 
-        gameLoop: while(true){
-            String input = sc.next().toLowerCase();
-            switch (input){
-                default:
-                    controller.guessWord(input);
-                    break;
-                case "exit-game":
+        gameLoop:
+        while (true) {
+            String input = sc.nextLine().toLowerCase();
+            System.out.println("input: " + input);
+            switch (input) {
+                case EXIT_MESSAGE:
                     try {
                         controller.disconnect();
                     } catch (IOException e) {
-                        System.out.println("Failed to disconnect.");
-                        e.printStackTrace();
+                        System.out.println("Failed to disconnect. Shutting down.");
+                        System.exit(1);
                     }
-                    System.out.println("Good bye!");
+                    System.out.println("Exiting game, goodbye!");
                     break gameLoop;
+                default:
+                    controller.guessWord(input);
+                    break;
             }
         }
     }
 
     private void welcome() {
-        if(SERVER_IP.isEmpty()) {
+        if (SERVER_IP.isEmpty()) {
             System.out.println(NO_IP_MESSAGE);
             System.exit(1);
         }

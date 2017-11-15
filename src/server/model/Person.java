@@ -12,9 +12,9 @@ import java.io.Serializable;
  */
 public class Person implements Serializable {
     private static final long id = 0;
-    private String title;
-    String name;
+    final String name;
     int score;
+    private String title;
 
     Person(String name) {
         this.name = name;
