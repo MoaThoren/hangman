@@ -92,7 +92,7 @@ class Net {
             connected = true;
             System.out.println("Client connection found.");
             clientSocket.setSoLinger(true, LINGER_TIME);
-            newClientSocket();
+            //newClientSocket();
         }
 
         private void setupCommunication() throws IOException {
@@ -125,13 +125,16 @@ class Net {
                     checkForExit(FORCE_EXIT_MESSAGE);
                     break;
                 }
-                if (checkForExit(reply))
-                    break;
                 try {
+                    if (checkForExit(reply))
+                        break;
                     send(controller.checkString(reply));
                 } catch (IOException e) {
                     System.out.println("Didn't manage to read from or write to leaderboard.");
                     System.exit(1);
+                } catch (NullPointerException e1) {
+                    System.out.println("Weird exit from user.");
+                    checkForExit(FORCE_EXIT_MESSAGE);
                 }
             }
         }
@@ -142,7 +145,7 @@ class Net {
             System.out.println("The reply \"" + reply + "\" is sent!");
         }
 
-        private boolean checkForExit(String reply) {
+        private boolean checkForExit(String reply) throws NullPointerException {
             if (reply.equalsIgnoreCase(EXIT_MESSAGE) || reply.equalsIgnoreCase(FORCE_EXIT_MESSAGE)) {
                 System.out.println("Client requested to " + reply);
                 connected = false;
