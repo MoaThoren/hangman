@@ -6,6 +6,7 @@ public class GameHandler {
     private LeaderboardAccess leaderboardAccess;
     private WordHandler wh;
     private String word;
+    private String name;
     private String[] wordArray = new String[1];
     private int bodyParts = 0;
     private boolean gameInProgress = false;
@@ -19,6 +20,7 @@ public class GameHandler {
 
     public String newGame(String name) throws IOException {
         leaderboardAccess.addScore(name);
+        this.name = name;
         return "The word is " + word.length() + " characters long, meaning you have " + word.length() + " tries.";
     }
 
@@ -40,13 +42,13 @@ public class GameHandler {
         }
         if (errors > 0) {         //INCORRECT LETTER(S)
             bodyParts = bodyParts - errors;
-            ret.append("Oh no! You lost ").append(errors).append(" body part(s)! \nYou now have ").append(bodyParts).append(" body parts left.\n");
+            ret.append("Oh no ").append(name).append("! You lost ").append(errors).append(" body part(s)! \nYou now have ").append(bodyParts).append(" body parts left.\n");
         }
 
         if (wordDone()) {         //WORD CORRECTLY GUESSED
             leaderboardAccess.updateScore(true);
             gameInProgress = false;
-            ret.append("Good job! The word was ").append(arrToString()).append("! \n").append(leaderboardAccess.getCurrentScore());
+            ret.append("Good job ").append(name).append("!").append("You now have ").append(leaderboardAccess.getCurrentScore()).append("The word was ").append(arrToString()).append("!");
             ret.append(newWord());
         } else {                   //SHOWS STATUS
             ret.append(arrToString());
@@ -54,8 +56,7 @@ public class GameHandler {
 
         if (bodyParts <= 0) {     //IF YOU'RE DEAD
             leaderboardAccess.updateScore(false);
-            ret.replace(0, ret.length(),"Ouch! You haven't got any body parts left!\nYour new score is " + leaderboardAccess.getCurrentScore() + " Your word was: " + word);
-            ret.append(newWord());
+            ret.replace(0, ret.length(),"Ouch! You haven't got any body parts left!\nYour new score is " + leaderboardAccess.getCurrentScore() + " Your word was: " + word).append(newWord());
         }
 
         return ret.toString();
