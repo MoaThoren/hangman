@@ -23,19 +23,9 @@ class Net {
     private final String EXIT_MESSAGE = "exit game";
     private final String FORCE_EXIT_MESSAGE = "force close game";
     private boolean connected = false;
-    private Controller controller = null;
     private ServerSocket serverSocket;
     private PrintWriter output;
     private BufferedReader input;
-
-    private Net() {
-        try {
-            controller = new Controller();
-        } catch (IOException | ClassNotFoundException e) {
-            System.out.println("Couldn't create controller. System shutting down.");
-            System.exit(1);
-        }
-    }
 
     /**
      * Creates/assigns a socket for the server and then opens a new client socket for each incoming transmission.
@@ -67,6 +57,16 @@ class Net {
 
     private class NetThread extends Thread {
         private Socket clientSocket;
+        private Controller controller;
+
+        NetThread() {
+            try {
+                controller = new Controller();
+            } catch (IOException | ClassNotFoundException e) {
+                System.out.println("Couldn't create controller. System shutting down.");
+                System.exit(1);
+            }
+        }
 
         public void run() {
             System.out.println("Inside new run.");
@@ -96,7 +96,6 @@ class Net {
             System.out.println("Client connection found.");
             clientSocket.setSoLinger(true, LINGER_TIME);
             newClientSocket();
-            System.out.println("Hello I'm after thread write.");
         }
 
         private void setupCommunication() throws IOException {
