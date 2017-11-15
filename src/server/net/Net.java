@@ -60,13 +60,16 @@ class Net {
     }
 
     private void newClientSocket() {
-        new NetThread().run();
+        System.out.println("New thread");
+        new NetThread().start();
+        System.out.println("After new thread");
     }
 
     private class NetThread extends Thread {
         private Socket clientSocket;
 
         public void run() {
+            System.out.println("Inside new run.");
             try {
                 waitForConnection();
                 connected();
@@ -92,7 +95,8 @@ class Net {
             connected = true;
             System.out.println("Client connection found.");
             clientSocket.setSoLinger(true, LINGER_TIME);
-            //newClientSocket();
+            newClientSocket();
+            System.out.println("Hello I'm after thread write.");
         }
 
         private void setupCommunication() throws IOException {
