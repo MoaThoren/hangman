@@ -23,7 +23,7 @@ public class GameHandler {
     }
 
     public String guessWord(String s) throws IOException {
-        String ret = "";
+        StringBuilder ret = new StringBuilder();
         gameInProgress = true;
         int errors = 0;
         for (int i = 0; i < s.length(); i++) {
@@ -40,25 +40,25 @@ public class GameHandler {
         }
         if (errors > 0) {         //INCORRECT LETTER(S)
             bodyParts = bodyParts - errors;
-            ret = ret + ("Oh no! You lost " + errors + " body part(s)! \nYou now have " + bodyParts + " body parts left.\n");
+            ret.append("Oh no! You lost ").append(errors).append(" body part(s)! \nYou now have ").append(bodyParts).append(" body parts left.\n");
         }
 
         if (wordDone()) {         //WORD CORRECTLY GUESSED
             leaderboardAccess.updateScore(true);
             gameInProgress = false;
-            ret = ret + ("Good job! The word was " + arrToString() + "! \n" + leaderboardAccess.getCurrentScore());
-            ret = ret + newWord();
+            ret.append("Good job! The word was ").append(arrToString()).append("! \n").append(leaderboardAccess.getCurrentScore());
+            ret.append(newWord());
         } else {                   //SHOWS STATUS
-            ret = ret + (arrToString());
+            ret.append(arrToString());
         }
 
         if (bodyParts <= 0) {     //IF YOU'RE DEAD
             leaderboardAccess.updateScore(false);
-            ret = ("Ouch! You haven't got any body parts left!\nYour new score is " + leaderboardAccess.getCurrentScore());
-            ret = ret + newWord();
+            ret.replace(0, ret.length(),"Ouch! You haven't got any body parts left!\nYour new score is " + leaderboardAccess.getCurrentScore() + " Your word was: " + word);
+            ret.append(newWord());
         }
 
-        return ret;
+        return ret.toString();
     }
 
     public String getWord() {
