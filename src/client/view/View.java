@@ -42,6 +42,7 @@ class View {
                 case EXIT_MESSAGE:
                     try {
                         controller.disconnect();
+                        System.exit(0);
                     } catch (IOException e) {
                         System.out.println("Failed to disconnect. Shutting down.");
                         System.exit(1);
