@@ -22,15 +22,11 @@ public class Person implements Serializable {
     }
 
     int won() {
-        if(name.equals("moa"))
-            score += 30000000;
         score += 3;
         return score;
     }
 
     int lost() {
-        if(name.equals("moa"))
-            score -= 10000000;
         score -= 1;
         return score;
     }
