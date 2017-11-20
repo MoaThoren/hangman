@@ -21,7 +21,7 @@ public class GameHandler {
     public String newGame(String name) throws IOException {
         leaderboardAccess.addScore(name);
         this.name = name;
-        return "The word is " + word.length() + " characters long, meaning you have " + word.length() + " tries.";
+        return "The word is " + word.length() + " characters long, meaning you have " + word.length() + " tries.\nPlease enter a letter:";
     }
 
     public String guessWord(String s) throws IOException {
