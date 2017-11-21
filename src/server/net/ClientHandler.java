@@ -1,50 +1,24 @@
-/*
- * The MIT License
- *
- * Copyright 2017 Leif Lindbäck <leifl@kth.se>.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
 package server.net;
+
+import server.controller.Controller;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.util.StringJoiner;
 import java.util.concurrent.ForkJoinPool;
-import se.kth.id1212.nio.textprotocolchat.common.Constants;
-import se.kth.id1212.nio.textprotocolchat.common.MessageException;
-import se.kth.id1212.nio.textprotocolchat.common.MessageSplitter;
-import se.kth.id1212.nio.textprotocolchat.common.MsgType;
 
 /**
  * Handles all communication with one particular chat client.
  */
 class ClientHandler implements Runnable {
-    private static final String JOIN_MESSAGE = " joined conversation.";
-    private static final String LEAVE_MESSAGE = " left conversation.";
-    private static final String USERNAME_DELIMETER = ": ";
 
-    private final Net server;
+    private int MAX_MSG_LENGTH = 12;
+
     private final SocketChannel clientChannel;
-    private final ByteBuffer msgFromClient = ByteBuffer.allocateDirect(Constants.MAX_MSG_LENGTH);
-    private final MessageSplitter msgSplitter = new MessageSplitter();
+    private final ByteBuffer msgFromClient = ByteBuffer.allocateDirect(MAX_MSG_LENGTH);
+    private Controller controller = new Controller();
+    private Net server;
+    private String answer;
 
     /**
      * Creates a new instance, which will handle communication with one specific client connected to
@@ -52,20 +26,24 @@ class ClientHandler implements Runnable {
      *
      * @param clientChannel The socket to which this handler's client is connected.
      */
-    ClientHandler(Net server, SocketChannel clientChannel) {
-        this.server = server;
+    ClientHandler(Net net, SocketChannel clientChannel) {
+        server = net;
         this.clientChannel = clientChannel;
     }
 
     /**
      * Receives and handles one message from the connected client.
      */
+    //
+    // DO SOMETHING WITH THE TESTED ANSWER.
+    //
+    //
     @Override
     public void run() {
-        while (msgSplitter.hasNext()) {
-            Message msg = new Message(msgSplitter.nextMsg());
-            server.broadcast(msg + LEAVE_MESSAGE);
-            }
+        try {
+            String reply = controller.checkString(answer);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -78,7 +56,7 @@ class ClientHandler implements Runnable {
     void sendMsg(ByteBuffer msg) throws IOException {
         clientChannel.write(msg);
         if (msg.hasRemaining()) {
-            throw new MessageException("Could not send message");
+            //throw new MessageException("Could not send message");
         }
     }
 
@@ -88,15 +66,13 @@ class ClientHandler implements Runnable {
      *
      * @throws IOException If failed to read message
      */
-    void recvMsg() throws IOException {
+    void recieveMsg() throws IOException {
         msgFromClient.clear();
-        int numOfReadBytes;
-        numOfReadBytes = clientChannel.read(msgFromClient);
-        if (numOfReadBytes == -1) {
+        int numOfReadBytes = clientChannel.read(msgFromClient);
+        if (numOfReadBytes == -1)
             throw new IOException("Client has closed connection.");
-        }
-        String recvdString = extractMessageFromBuffer();
-        msgSplitter.appendRecvdString(recvdString);
+        answer = extractMessageFromBuffer();
+        //msgSplitter.appendRecvdString(answer);
         ForkJoinPool.commonPool().execute(this);
     }
 
@@ -116,6 +92,7 @@ class ClientHandler implements Runnable {
         clientChannel.close();
     }
 
+    /*
     private static class Message {
         private String msgBody;
         private String receivedString;
@@ -140,4 +117,5 @@ class ClientHandler implements Runnable {
             return msgTokens.length > 1;
         }
     }
+    */
 }

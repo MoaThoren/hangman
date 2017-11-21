@@ -2,10 +2,7 @@ package server.net;
 
 import server.controller.Controller;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
@@ -27,24 +24,12 @@ class Net {
     private final Queue<ByteBuffer> messagesToSend = new ArrayDeque<>();
     private Selector selector;
     private ServerSocketChannel listeningSocketChannel;
-    private Controller controller;
-
-    Net() {
-        try {
-            controller = new Controller();
-        } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
+    private Controller controller = new Controller();
 
     public void run() {
         try {
             selector = Selector.open();
-            listeningSocketChannel = ServerSocketChannel.open();
-            listeningSocketChannel.configureBlocking(false);
-            listeningSocketChannel.bind(new InetSocketAddress(PORT_NUMBER));
-            listeningSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
-
+            initRecieve();
             while (true) {
                 selector.select();
                 Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
@@ -68,6 +53,19 @@ class Net {
         }
     }
 
+    void initRecieve() {
+        try {
+            listeningSocketChannel = ServerSocketChannel.open();
+            listeningSocketChannel.configureBlocking(false);
+            listeningSocketChannel.bind(new InetSocketAddress(PORT_NUMBER));
+            listeningSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+        } catch (ClosedChannelException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     void acceptClient(SelectionKey key) {
         ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
         try {
@@ -86,7 +84,7 @@ class Net {
     void recieveMsg(SelectionKey key) throws IOException {
         Client client = (Client) key.attachment();
         try {
-            client.handler.recvMsg();
+            client.handler.recieveMsg();
         } catch (IOException clientHasClosedConnection) {
             client.handler.disconnectClient();
             key.cancel();
