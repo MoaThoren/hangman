@@ -1,42 +1,41 @@
 package client.net;
 
 
-import com.sun.org.apache.bcel.internal.generic.Select;
-import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
-import java.util.StringJoiner;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ForkJoinPool;
 
 
-public class Net {
+public class Net implements Runnable {
     private boolean connected;
     private SocketChannel socketChannel;
     private Selector selector;
     private InetSocketAddress serverAddress;
-    private MessageHandler messageSplitter = new MessageHandler();
-    private int port = 5555;
-    private CommunicationHandler outputhandler;
+    private MessageHandler messageHandler = new MessageHandler();
+    private int PORT_NUMBER = 5555;
+    //private CommunicationHandler outputhandler;
+    private final List<CommunicationListener> listeners = new ArrayList<>();
     private final Queue<String> messagesWaitingToBeSent = new ArrayDeque<>();
     private volatile boolean messageReady = true;
     private final ByteBuffer receivedFromServer = ByteBuffer.allocateDirect(Constants.MAX_MSG_LENGTH);
-    private String ERROR_IN_COMMUNICATION = "Connection has been lost, please try again later"
+    private String ERROR_IN_COMMUNICATION = "Connection has been lost, please try again later";
     private String DISCONNECT_MESSAGE = "EXIT_GAME";
+    private String HOST_IP = "127.0.0.1";
 
     @Override
     public void run() {
         try {
-            newConnection();
-            startSelector();
+            newConnection(HOST_IP);
+            initSelector();
 
             while (connected || !messagesWaitingToBeSent.isEmpty()) {
                 if (messageReady) {
@@ -46,12 +45,12 @@ public class Net {
 
                 selector.select();
                 for (SelectionKey key : selector.selectedKeys()) {
-                    selector.selectedKeys().remove();
+                    selector.selectedKeys().remove(key);
                     if (!key.isValid()) {
                         continue;
                     }
                     if (key.isConnectable()) {
-                        finishConnection();
+                        finishConnection(key);
                     } else if (key.isReadable()) {
                         messageFromServer(key);
                     } else if (key.isWritable()) {
@@ -59,40 +58,36 @@ public class Net {
                     }
                 }
             }
-
-        }
-        catch(Exception e){
-            System.err.prinln(ERROR_IN_COMMUNICATION);
-        }
-        try {
             disconnectFromServer();
         }
-        catch (IOException ex) {
+        catch(Exception e){
             System.err.println(ERROR_IN_COMMUNICATION);
         }
     }
 
     private void newConnection(String host) {
-        serverAddress = new InetSocketAddress(host, port);
-        new Thread(this).start();
+        serverAddress = new InetSocketAddress(host, PORT_NUMBER);
+        ForkJoinPool.commonPool().execute(this);
 
     }
 
+    // Denna vet jag inte om ni tänkt skulle vara i disconnectFromServer() rad 77 eller inte så lämnar den så här.
     public void sendDisconnectMessage() throws IOException {
         connected = false;
         sendMessage(DISCONNECT_MESSAGE);
     }
 
-    public void disconnectFromServer() throws IOException {
+    private void disconnectFromServer() throws IOException {
         socketChannel.close();
         socketChannel.keyFor(selector).cancel();
     }
 
-    public void startSelector() throws IOException {
+    private void initSelector() throws IOException {
         selector = Selector.open();
         socketChannel.register(selector, SelectionKey.OP_CONNECT);
     }
 
+    //Används inte
     public void startConnection() throws IOException {
         socketChannel = SocketChannel.open();
         socketChannel.configureBlocking(false);
@@ -100,14 +95,14 @@ public class Net {
         connected = true;
     }
 
-    private void finishConnection (SelectionKey ) throws IOException {
+    private void finishConnection (SelectionKey key) throws IOException {
         socketChannel.finishConnect();
         key.interestOps(SelectionKey.OP_READ);
         try {
             InetSocketAddress remoteAddress = (InetSocketAddress) socketChannel.getRemoteAddress();
                 notifyConnectionDone(remoteAddress);
         }
-        catch(IOException usingDefaultinsteadofRemote) {
+        catch(IOException usingDefaultInsteadOfRemote) {
             notifyConnectionDone(serverAddress);
         }
     }
@@ -115,7 +110,7 @@ public class Net {
     private void sendMessage(String message) {
         String messageWithLengthHeader = MessageHandler.addHeaderLength(message);
         synchronized (messagesWaitingToBeSent) {
-            messagesWaitingToBeSent.add(ByteBuffer.wrap(messageWithLengthHeader.getBytes()));
+            messagesWaitingToBeSent.add(messageWithLengthHeader);
         }
         messageReady = true;
         selector.wakeup();
@@ -124,7 +119,8 @@ public class Net {
     private void sendMessageToServer (SelectionKey key) throws IOException {
         ByteBuffer message;
         synchronized (messagesWaitingToBeSent) {
-            while((message = messagesWaitingToBeSent.peek()) != null ) {
+            message = ByteBuffer.wrap(messagesWaitingToBeSent.peek().getBytes());
+            while(message != null) {
                 socketChannel.write(message);
                 if(message.hasRemaining()){
                     return;
@@ -142,12 +138,17 @@ public class Net {
             throw new IOException(ERROR_IN_COMMUNICATION);
         }
         String stringFromServer = extractMessageFromBuffer();
-        messageSplitter.appendReceivedString(stringFromServer);
-        while (messageSplitter.hasNext()) {
-            String msg = messageSplitter.nextMessage();
-            notifyMessageReceived(messageSplitter.bodyOf(msg));
+        //MessageHandler stuff som behövs eller som ni får göra om.
+        messageHandler.appendReceivedString(stringFromServer);
+        while (messageHandler.hasNext()) {
+            String msg = messageHandler.nextMessage();
+            notifyMessageReceived(messageHandler.bodyOf(msg));
 
         }
+    }
+
+    private void notifyMessageReceived(String message) {
+
     }
 
     private String extractMessageFromBuffer() {
@@ -160,36 +161,21 @@ public class Net {
     private void notifyConnectionDone(InetSocketAddress connectedAddress) {
         Executor pool = ForkJoinPool.commonPool();
         for (CommunicationListener listener : listeners) {
-            pool.execute(new Runnable() {
-                @Override
-                public void run() {
-                    listener.connected(connectedAddress);
-                }
-            });
+            pool.execute(() -> listener.connected(connectedAddress));
         }
     }
 
     private void notifyDisconnectionDone() {
         Executor pool = ForkJoinPool.commonPool();
         for (CommunicationListener listener : listeners) {
-            pool.execute(new Runnable() {
-                @Override
-                public void run() {
-                    listener.disconnected();
-                }
-            });
+            pool.execute(listener::disconnected);
         }
     }
 
     private void notifyMsgReceived(String msg) {
         Executor pool = ForkJoinPool.commonPool();
         for (CommunicationListener listener : listeners) {
-            pool.execute(new Runnable() {
-                @Override
-                public void run() {
-                    listener.recvdMsg(msg);
-                }
-            });
+            pool.execute(() -> listener.recvdMsg(msg));
         }
     }
 
