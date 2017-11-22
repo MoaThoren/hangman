@@ -1,6 +1,6 @@
 package client.controller;
 
-import client.net.MessageHandler;
+import client.net.MessagePrinter;
 import client.net.Net;
 
 import java.io.IOException;
@@ -12,8 +12,8 @@ public class Controller {
         net.sendMessage(guess);
     }
 
-    public void newConnection(String host, MessageHandler messageHandler) throws IOException {
-        net.newConnection(host, messageHandler);
+    public void newConnection(String host, MessagePrinter messagePrinter) throws IOException {
+        net.newConnection(host, messagePrinter);
     }
 
     public void disconnect() throws IOException {
