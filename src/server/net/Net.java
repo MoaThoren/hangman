@@ -2,179 +2,144 @@ package server.net;
 
 import server.controller.Controller;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
+import java.net.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.*;
+import java.util.ArrayDeque;
+import java.util.Iterator;
+import java.util.Queue;
 
-/**
- * Class for running the net layer of the server.
- * Handles the sockets for the client and server on the server side, and then lies waiting for connections.
- * Each transmission is served in its own thread and is handled using the <code>checkString</code> method in
- * the controller.
- */
 class Net {
     private final int PORT_NUMBER = 5555;
     private final int LINGER_TIME = 0;
     private final String EXIT_MESSAGE = "exit game";
     private final String FORCE_EXIT_MESSAGE = "force close game";
-    private boolean connected = false;
-    private ServerSocket serverSocket;
+    private final Queue<ByteBuffer> messagesToSend = new ArrayDeque<>();
+    private ServerSocketChannel listeningSocketChannel;
+    private Controller controller = new Controller();
+    private Boolean sendAll = false;
+    private Selector selector;
 
-    /**
-     * Creates/assigns a socket for the server and then opens a new client socket for each incoming transmission.
-     *
-     * @param args Optional arguments.
-     */
     public static void main(String[] args) {
-        Net net = new Net();
-        net.newServerSocket();
-        net.newClientSocket();
+        new Net().run();
     }
 
-    private void newServerSocket() {
+    public void run() {
         try {
-            this.serverSocket = new ServerSocket(this.PORT_NUMBER);
-            this.serverSocket.setSoTimeout(LINGER_TIME);
+            selector = Selector.open();
+            initRecieve();
+
+            while (true) {
+                if (sendAll)
+                    sendAll();
+                selector.select();
+                Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
+                while (iterator.hasNext()) {
+                    SelectionKey key = iterator.next();
+                    iterator.remove();
+                    if (!key.isValid())
+                        continue;
+                    if (key.isAcceptable())
+                        acceptClient(key);
+                    else if (key.isReadable())
+                        recieveMsg(key);
+                    else if (key.isWritable())
+                        sendMsg(key);
+                }
+            }
         } catch (IOException e) {
-            System.out.println("Couldn't create a new server socket, exiting...");
-            System.exit(1);
+            e.printStackTrace();
         }
-        System.out.println("Server socket created.");
     }
 
-    private void newClientSocket() {
-        new NetThread().start();
+    void initRecieve() {
+        try {
+            listeningSocketChannel = ServerSocketChannel.open();
+            listeningSocketChannel.configureBlocking(false);
+            listeningSocketChannel.bind(new InetSocketAddress(PORT_NUMBER));
+            listeningSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+        } catch (ClosedChannelException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    private class NetThread extends Thread {
-        private Socket clientSocket;
-        private Controller controller;
-        private PrintWriter output;
-        private BufferedReader input;
+    void sendAll() {
+        for (SelectionKey key : selector.keys()) {
+            if (key.channel() instanceof SocketChannel && key.isValid()) {
+                key.interestOps(SelectionKey.OP_WRITE);
+            }
+        }
+    }
 
-        NetThread() {
-            try {
-                controller = new Controller();
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
-                System.out.println("Couldn't create controller. System shutting down.");
-                System.exit(1);
+    void acceptClient(SelectionKey key) {
+        ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
+        try {
+            SocketChannel clientChannel = serverSocketChannel.accept();
+            clientChannel.configureBlocking(false);
+            ClientHandler handler = new ClientHandler(this, clientChannel);
+            clientChannel.register(selector, SelectionKey.OP_WRITE, new Client(handler));
+            clientChannel.setOption(StandardSocketOptions.SO_LINGER, LINGER_TIME);
+        } catch (ClosedChannelException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    void recieveMsg(SelectionKey key) throws IOException {
+        Client client = (Client) key.attachment();
+        try {
+            client.handler.receiveMsg();
+        } catch (IOException clientHasClosedConnection) {
+            client.handler.disconnectClient();
+            key.cancel();
+        }
+    }
+
+    void sendMsg(SelectionKey key) throws IOException {
+        Client client = (Client) key.attachment();
+        try {
+            client.sendAll();
+            key.interestOps(SelectionKey.OP_READ);
+        } catch (MessageException couldNotSendAllMessages) {
+        } catch (IOException clientHasClosedConnection) {
+                            client.handler.disconnectClient();
+                            key.cancel();
+                        }
+    }
+
+    void queueMsgToSend(String msg) {
+        ByteBuffer bufferedMsg = ByteBuffer.wrap(msg.getBytes());
+        synchronized (messagesToSend) {
+            messagesToSend.add(bufferedMsg);
+        }
+        selector.wakeup();
+    }
+
+    private class Client {
+        private final ClientHandler handler;
+        private final Queue<ByteBuffer> messagesToSend = new ArrayDeque<>();
+
+        private Client(ClientHandler handler) {
+            this.handler = handler;
+        }
+
+        private void queueMsgToSend(ByteBuffer msg) {
+            synchronized (messagesToSend) {
+                messagesToSend.add(msg.duplicate());
             }
         }
 
-        public void run() {
-            try {
-                waitForConnection();
-                connected();
-                setupCommunication();
-                receive();
-            } catch (SocketTimeoutException e) {
-                System.out.println("Connection timed out, no client connected within " + LINGER_TIME/1000 + " s.");
-                System.exit(0);
-            } catch (IOException e1) {
-                System.out.println("Something went wrong during connection startup, please restart the server.");
-                System.exit(1);
-            } finally {
-                closeClientSocket();
-            }
-        }
-
-        private void waitForConnection() throws IOException {
-            System.out.println("Server waiting on client socket acceptance");
-            clientSocket = serverSocket.accept();
-        }
-
-        private void connected() throws SocketException {
-            connected = true;
-            System.out.println("Client connection found.");
-            clientSocket.setSoLinger(true, LINGER_TIME);
-            newClientSocket();
-        }
-
-        private void setupCommunication() throws IOException {
-            output = new PrintWriter(clientSocket.getOutputStream(), true);
-            input = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-        }
-
-        private void receive() {
-            send("Please enter your name to begin:\n");
-            try {
-                String reply = input.readLine();
-                if (!checkForExit(reply)) {
-                    send(controller.newGame(reply));
-                    System.out.println("This is the word: " + controller.getWord());
+        private void sendAll() throws IOException, MessageException {
+            ByteBuffer msg;
+            synchronized (messagesToSend) {
+                while ((msg = messagesToSend.peek()) != null) {
+                    handler.sendMsg(msg);
+                    messagesToSend.remove();
                 }
-            } catch (IOException e) {
-                System.out.println("Couldn't get a reply, client probably disconnected...\nRestarting connection...");
-                checkForExit(FORCE_EXIT_MESSAGE);
-            } catch (ClassNotFoundException e) {
-                System.out.println("Couldn't load leaderboard, try deleting the \"leaderboard.ser\" file and try again.");
-                System.exit(1);
-            } catch (NullPointerException e) {
-                System.out.println("Weird exit.");
-                checkForExit(FORCE_EXIT_MESSAGE);
-            }
-            System.out.println("Starting to wait for messages...");
-            while (connected) {
-                System.out.println("Checking for new messages...");
-                String reply;
-                try {
-                    reply = input.readLine();
-                } catch (IOException e) {
-                    System.out.println("Couldn't get a reply, client probably disconnected...\nRestarting connection...");
-                    checkForExit(FORCE_EXIT_MESSAGE);
-                    break;
-                }
-                try {
-                    if (checkForExit(reply))
-                        break;
-                    send(controller.checkString(reply));
-                    System.out.println("This is the word: " + controller.getWord());
-                    System.out.println("*************************************************************");
-                } catch (IOException e) {
-                    System.out.println("Didn't manage to read from or write to leaderboard.");
-                    System.exit(1);
-                } catch (NullPointerException e1) {
-                    System.out.println("Weird exit from user.");
-                    checkForExit(FORCE_EXIT_MESSAGE);
-                }
-            }
-        }
-
-        private void send(String reply) {
-            System.out.println("*************************************************************");
-            System.out.println("Sending reply...");
-            output.println(reply);
-            System.out.println("The reply \"" + reply + "\" is sent!");
-        }
-
-        private boolean checkForExit(String reply) throws NullPointerException {
-            if (reply.equalsIgnoreCase(EXIT_MESSAGE) || reply.equalsIgnoreCase(FORCE_EXIT_MESSAGE)) {
-                System.out.println("Client requested to " + reply);
-                connected = false;
-                try {
-                    controller.didUserEscapeWord();
-                } catch (IOException e) {
-                    System.out.println("Didn't manage to save the cheating users score, consider yourself lucky...");
-                }
-                closeClientSocket();
-                newClientSocket();
-                return true;
-            }
-            return false;
-        }
-
-        private void closeClientSocket() {
-            try {
-                clientSocket.close();
-            } catch (IOException ioEx) {
-                System.out.println("Couldn't close the client socket, shutting down.");
-                System.exit(1);
             }
         }
     }

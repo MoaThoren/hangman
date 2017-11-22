@@ -10,8 +10,12 @@ public class Controller {
     private GameHandler gameHandler;
     private LeaderboardAccess leaderboardAccess;
 
-    public Controller() throws IOException, ClassNotFoundException {
-        leaderboardAccess = new LeaderboardAccess();
+    public Controller() {
+        try {
+            leaderboardAccess = new LeaderboardAccess();
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     public String newGame(String name) throws IOException, ClassNotFoundException {
