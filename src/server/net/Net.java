@@ -10,27 +10,26 @@ import java.util.ArrayDeque;
 import java.util.Iterator;
 import java.util.Queue;
 
-/**
- * Class for running the net layer of the server.
- * Handles the sockets for the client and server on the server side, and then lies waiting for connections.
- * Each transmission is served in its own thread and is handled using the <code>checkString</code> method in
- * the controller.
- */
 class Net {
     private final int PORT_NUMBER = 5555;
     private final int LINGER_TIME = 0;
     private final String EXIT_MESSAGE = "exit game";
     private final String FORCE_EXIT_MESSAGE = "force close game";
     private final Queue<ByteBuffer> messagesToSend = new ArrayDeque<>();
-    private Selector selector;
     private ServerSocketChannel listeningSocketChannel;
     private Controller controller = new Controller();
     private Boolean sendAll = false;
+    private Selector selector;
+
+    public static void main(String[] args) {
+        new Net().run();
+    }
 
     public void run() {
         try {
             selector = Selector.open();
             initRecieve();
+
             while (true) {
                 if (sendAll)
                     sendAll();
@@ -39,16 +38,14 @@ class Net {
                 while (iterator.hasNext()) {
                     SelectionKey key = iterator.next();
                     iterator.remove();
-                    if (!key.isValid()) {
+                    if (!key.isValid())
                         continue;
-                    }
-                    if (key.isAcceptable()) {
+                    if (key.isAcceptable())
                         acceptClient(key);
-                    } else if (key.isReadable()) {
+                    else if (key.isReadable())
                         recieveMsg(key);
-                    } else if (key.isWritable()) {
+                    else if (key.isWritable())
                         sendMsg(key);
-                    }
                 }
             }
         } catch (IOException e) {
@@ -95,7 +92,7 @@ class Net {
     void recieveMsg(SelectionKey key) throws IOException {
         Client client = (Client) key.attachment();
         try {
-            client.handler.recieveMsg();
+            client.handler.receiveMsg();
         } catch (IOException clientHasClosedConnection) {
             client.handler.disconnectClient();
             key.cancel();
@@ -114,7 +111,7 @@ class Net {
                         }
     }
 
-    void broadcast(String msg) {
+    void queueMsgToSend(String msg) {
         ByteBuffer bufferedMsg = ByteBuffer.wrap(msg.getBytes());
         synchronized (messagesToSend) {
             messagesToSend.add(bufferedMsg);
