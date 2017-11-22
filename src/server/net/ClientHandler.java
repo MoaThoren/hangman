@@ -16,7 +16,7 @@ class ClientHandler implements Runnable {
 
     private final SocketChannel clientChannel;
     private final ByteBuffer msgFromClient = ByteBuffer.allocateDirect(MAX_MSG_LENGTH);
-    private Controller controller = new Controller();
+    private Controller controller  = new Controller();
     private Net server;
     private String answer;
 
@@ -34,14 +34,10 @@ class ClientHandler implements Runnable {
     /**
      * Receives and handles one message from the connected client.
      */
-    //
-    // DO SOMETHING WITH THE TESTED ANSWER.
-    //
-    //
     @Override
     public void run() {
         try {
-            String reply = controller.checkString(answer);
+            server.broadcast(controller.checkString(answer));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -53,10 +49,10 @@ class ClientHandler implements Runnable {
      * @param msg The message to send.
      * @throws IOException If failed to send message.
      */
-    void sendMsg(ByteBuffer msg) throws IOException {
+    void sendMsg(ByteBuffer msg) throws MessageException, IOException {
         clientChannel.write(msg);
         if (msg.hasRemaining()) {
-            //throw new MessageException("Could not send message");
+            throw new MessageException("Could not send message");
         }
     }
 

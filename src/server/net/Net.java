@@ -25,12 +25,15 @@ class Net {
     private Selector selector;
     private ServerSocketChannel listeningSocketChannel;
     private Controller controller = new Controller();
+    private Boolean sendAll = false;
 
     public void run() {
         try {
             selector = Selector.open();
             initRecieve();
             while (true) {
+                if (sendAll)
+                    sendAll();
                 selector.select();
                 Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
                 while (iterator.hasNext()) {
@@ -66,6 +69,14 @@ class Net {
         }
     }
 
+    void sendAll() {
+        for (SelectionKey key : selector.keys()) {
+            if (key.channel() instanceof SocketChannel && key.isValid()) {
+                key.interestOps(SelectionKey.OP_WRITE);
+            }
+        }
+    }
+
     void acceptClient(SelectionKey key) {
         ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
         try {
@@ -91,16 +102,24 @@ class Net {
         }
     }
 
-    void sendMsg(SelectionKey key) {
+    void sendMsg(SelectionKey key) throws IOException {
         Client client = (Client) key.attachment();
         try {
             client.sendAll();
             key.interestOps(SelectionKey.OP_READ);
-        } catch (/*Message*/Exception couldNotSendAllMessages) {
-        }/* catch (IOException clientHasClosedConnection) {
+        } catch (MessageException couldNotSendAllMessages) {
+        } catch (IOException clientHasClosedConnection) {
                             client.handler.disconnectClient();
                             key.cancel();
-                        }*/
+                        }
+    }
+
+    void broadcast(String msg) {
+        ByteBuffer bufferedMsg = ByteBuffer.wrap(msg.getBytes());
+        synchronized (messagesToSend) {
+            messagesToSend.add(bufferedMsg);
+        }
+        selector.wakeup();
     }
 
     private class Client {
@@ -117,7 +136,7 @@ class Net {
             }
         }
 
-        private void sendAll() throws IOException {
+        private void sendAll() throws IOException, MessageException {
             ByteBuffer msg;
             synchronized (messagesToSend) {
                 while ((msg = messagesToSend.peek()) != null) {
