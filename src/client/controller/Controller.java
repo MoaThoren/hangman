@@ -1,7 +1,6 @@
 package client.controller;
 
 import client.net.CommunicationListener;
-import client.net.MessagePrinter;
 import client.net.Net;
 
 import java.io.IOException;

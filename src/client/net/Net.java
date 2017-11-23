@@ -29,7 +29,6 @@ public class Net implements Runnable {
     private final ByteBuffer receivedFromServer = ByteBuffer.allocateDirect(Constants.MAX_MSG_LENGTH);
     private String ERROR_IN_COMMUNICATION = "Connection has been lost, please try again later";
     private String DISCONNECT_MESSAGE = "EXIT_GAME";
-    private String HOST_IP = "127.0.0.1";
 
     @Override
     public void run() {
@@ -41,7 +40,6 @@ public class Net implements Runnable {
                 if (messageReady) {
                     socketChannel.keyFor(selector).interestOps(SelectionKey.OP_WRITE);
                     messageReady = false;
-                    System.out.println("messageReady");
                 }
                 selector.select();
                 for (SelectionKey key : selector.selectedKeys()) {
@@ -50,15 +48,11 @@ public class Net implements Runnable {
                         continue;
                     }
                     if (key.isConnectable()) {
-                        System.out.println("connectable");
                         finishConnection(key);
                     } else if (key.isReadable()) {
-                        System.out.println("readable");
                         messageFromServer();
                     } else if (key.isWritable()) {
-                        System.out.println("writable");
                         sendMessageToServer(key);
-                        System.out.println("writable2");
                     }
                 }
             }
@@ -166,7 +160,7 @@ public class Net implements Runnable {
 
     private void notifyMessageReceived(String msg) {
         Executor pool = ForkJoinPool.commonPool();
-        pool.execute(() -> communicationListener.recvdMsg(msg));
+        pool.execute(() -> communicationListener.receivedMsg(msg));
     }
 
 }

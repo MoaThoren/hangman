@@ -2,7 +2,6 @@ package client.view;
 
 import client.controller.Controller;
 import client.net.CommunicationListener;
-import client.net.MessagePrinter;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -15,7 +14,7 @@ class View {
     private final String EXIT_MESSAGE = "exit game";
     private final CommunicationListener communicationListener = new CommunicationListener() {
         @Override
-        public void recvdMsg(String msg) {
+        public void receivedMsg(String msg) {
             printOut(msg);
         }
 
@@ -46,7 +45,6 @@ class View {
         Scanner sc = new Scanner(System.in);
         try {
             controller.newConnection(host, communicationListener);
-            System.out.println("Connected to: " + host);
         } catch (IOException e) {
             System.out.println("Couldn't create a new connection...\nPlease restart client and try again.");
             System.exit(1);

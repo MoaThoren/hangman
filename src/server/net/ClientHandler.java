@@ -13,7 +13,7 @@ import static common.Constants.MAX_MSG_LENGTH;
 
 class ClientHandler implements Runnable {
 
-        private final SocketChannel clientChannel;
+    private final SocketChannel clientChannel;
     private final ByteBuffer msgFromClient = ByteBuffer.allocateDirect(MAX_MSG_LENGTH);
     private Controller controller  = new Controller();
     private Net server;

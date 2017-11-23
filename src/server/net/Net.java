@@ -2,7 +2,6 @@ package server.net;
 
 import common.MessageException;
 import common.MessageHandler;
-import server.controller.Controller;
 
 import java.io.IOException;
 import java.net.*;
@@ -12,17 +11,16 @@ import java.util.ArrayDeque;
 import java.util.Iterator;
 import java.util.Queue;
 
+import static common.Constants.PORT_NUMBER;
+
 class Net {
-    private final int PORT_NUMBER = 5555;
     private final int LINGER_TIME = 0;
     private final String EXIT_MESSAGE = "exit game";
     private final String FORCE_EXIT_MESSAGE = "force close game";
     private final Queue<ByteBuffer> messagesToSend = new ArrayDeque<>();
     private ServerSocketChannel listeningSocketChannel;
-    private Controller controller = new Controller();
     private Boolean sendAll = false;
     private Selector selector;
-    private volatile boolean timeToBroadcast = false;
 
     public static void main(String[] args) {
         new Net().run();
