@@ -142,12 +142,8 @@ public class Net implements Runnable {
         }
         String stringFromServer = extractMessageFromBuffer();
         //MessageHandler stuff som behövs eller som ni får göra om.
-        messageHandler.appendReceivedString(stringFromServer);
-        while (messageHandler.hasNext()) {
-            String msg = messageHandler.nextMessage();
-            notifyMessageReceived(messageHandler.bodyOf(msg));
-
-        }
+        String extracedMessage = messageHandler.appendReceivedString(stringFromServer);
+        notifyMessageReceived(extracedMessage);
     }
 
 
