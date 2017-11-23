@@ -1,6 +1,6 @@
 package client.net;
 
-public interface MessageHandler {
+public interface MessagePrinter {
 
     void handleMessage(String message);
 }
