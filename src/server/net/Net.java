@@ -1,7 +1,7 @@
 package server.net;
 
 import common.MessageException;
-import server.controller.Controller;
+import common.MessageHandler;
 
 import java.io.IOException;
 import java.net.*;
@@ -11,14 +11,14 @@ import java.util.ArrayDeque;
 import java.util.Iterator;
 import java.util.Queue;
 
+import static common.Constants.PORT_NUMBER;
+
 class Net {
-    private final int PORT_NUMBER = 5555;
     private final int LINGER_TIME = 0;
     private final String EXIT_MESSAGE = "exit game";
     private final String FORCE_EXIT_MESSAGE = "force close game";
     private final Queue<ByteBuffer> messagesToSend = new ArrayDeque<>();
     private ServerSocketChannel listeningSocketChannel;
-    private Controller controller = new Controller();
     private Boolean sendAll = false;
     private Selector selector;
 
@@ -32,8 +32,10 @@ class Net {
             initRecieve();
 
             while (true) {
-                if (sendAll)
+                if (sendAll) {
                     sendAll();
+                    sendAll = false;
+                }
                 selector.select();
                 Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
                 while (iterator.hasNext()) {
@@ -41,16 +43,19 @@ class Net {
                     iterator.remove();
                     if (!key.isValid())
                         continue;
-                    if (key.isAcceptable())
+                    if (key.isAcceptable()) {
                         acceptClient(key);
-                    else if (key.isReadable())
+                    } else if (key.isReadable()) {
                         recieveMsg(key);
-                    else if (key.isWritable())
+                    } else if (key.isWritable()) {
                         sendMsg(key);
+                    }
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (MessageException e) {
+            System.out.println(e.getMessage());
         }
     }
 
@@ -90,7 +95,7 @@ class Net {
         }
     }
 
-    void recieveMsg(SelectionKey key) throws IOException {
+    void recieveMsg(SelectionKey key) throws IOException, MessageException {
         Client client = (Client) key.attachment();
         try {
             client.handler.receiveMsg();
@@ -113,25 +118,20 @@ class Net {
     }
 
     void queueMsgToSend(String msg) {
-        ByteBuffer bufferedMsg = ByteBuffer.wrap(msg.getBytes());
+        ByteBuffer bufferedMsg = ByteBuffer.wrap(MessageHandler.addHeaderLength(msg).getBytes());
         synchronized (messagesToSend) {
             messagesToSend.add(bufferedMsg);
         }
+        sendAll = true;
         selector.wakeup();
     }
+    
 
     private class Client {
         private final ClientHandler handler;
-        private final Queue<ByteBuffer> messagesToSend = new ArrayDeque<>();
 
         private Client(ClientHandler handler) {
             this.handler = handler;
-        }
-
-        private void queueMsgToSend(ByteBuffer msg) {
-            synchronized (messagesToSend) {
-                messagesToSend.add(msg.duplicate());
-            }
         }
 
         private void sendAll() throws IOException, MessageException {
@@ -144,4 +144,7 @@ class Net {
             }
         }
     }
+
 }
+
+

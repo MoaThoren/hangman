@@ -13,7 +13,7 @@ import static common.Constants.MAX_MSG_LENGTH;
 
 class ClientHandler implements Runnable {
 
-        private final SocketChannel clientChannel;
+    private final SocketChannel clientChannel;
     private final ByteBuffer msgFromClient = ByteBuffer.allocateDirect(MAX_MSG_LENGTH);
     private Controller controller  = new Controller();
     private Net server;
@@ -28,7 +28,7 @@ class ClientHandler implements Runnable {
     @Override
     public void run() {
         try {
-            server.queueMsgToSend(MessageHandler.addHeaderLength(controller.checkString(answer)));
+            server.queueMsgToSend(controller.checkString(answer));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -49,20 +49,21 @@ class ClientHandler implements Runnable {
         }
     }
 
-    void receiveMsg() throws IOException {
+    void receiveMsg() throws IOException, MessageException {
         msgFromClient.clear();
         int numOfReadBytes = clientChannel.read(msgFromClient);
         if (numOfReadBytes == -1)
             throw new IOException("Client has closed connection.");
         answer = extractMessageFromBuffer();
+        System.out.println(answer);
         ForkJoinPool.commonPool().execute(this);
     }
 
-    private String extractMessageFromBuffer() {
+    private String extractMessageFromBuffer() throws MessageException {
         msgFromClient.flip();
         byte[] bytes = new byte[msgFromClient.remaining()];
         msgFromClient.get(bytes);
-        return new String(bytes);
+        return MessageHandler.extractMsg(new String(bytes));
     }
 
     void disconnectClient() throws IOException {

@@ -1,7 +1,5 @@
 package common;
 
-import java.util.ArrayDeque;
-import java.util.Queue;
 import java.util.StringJoiner;
 
 public class MessageHandler {
@@ -9,7 +7,6 @@ public class MessageHandler {
     private static final String MSG_RECEIVED_ERROR = "Message was corrupted.";
     private static final int MSG_TYPE_INDEX = 0;
     private static final int MSG_BODY_INDEX = 1;
-    private final Queue<String> messageQueue = new ArrayDeque<>();
     private final String WHOLE_MESSAGE_NOT_RECEIVED = "The whole message was not received";
 
     public static String addHeaderLength(String msg){
@@ -24,17 +21,10 @@ public class MessageHandler {
         return msg[MSG_BODY_INDEX];
     }
 
-    public synchronized boolean hasNext() {
-        return !messageQueue.isEmpty();
-    }
-
-    public synchronized String nextMessage() {
-        return messageQueue.poll();
-    }
-
     public synchronized String appendReceivedString(String receivedMessage) {
         String[] splitAfterLength = receivedMessage.split(MSG_LEN_DELIMITER);
         if(splitAfterLength.length < 2) {
+            System.out.println(receivedMessage);
             return WHOLE_MESSAGE_NOT_RECEIVED;
         }
         int statedLength = Integer.parseInt(splitAfterLength[0]);

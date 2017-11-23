@@ -11,8 +11,6 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ForkJoinPool;
@@ -26,13 +24,11 @@ public class Net implements Runnable {
     private MessageHandler messageHandler = new MessageHandler();
     private int PORT_NUMBER = 5555;
     private CommunicationListener communicationListener;
-    private final List<CommunicationListener> listeners = new ArrayList<>();
-    private final Queue<String> messagesWaitingToBeSent = new ArrayDeque<>();
-    private volatile boolean messageReady = true;
+    private final Queue<ByteBuffer> messagesWaitingToBeSent = new ArrayDeque<>();
+    private volatile boolean messageReady = false;
     private final ByteBuffer receivedFromServer = ByteBuffer.allocateDirect(Constants.MAX_MSG_LENGTH);
     private String ERROR_IN_COMMUNICATION = "Connection has been lost, please try again later";
     private String DISCONNECT_MESSAGE = "EXIT_GAME";
-    private String HOST_IP = "127.0.0.1";
 
     @Override
     public void run() {
@@ -45,7 +41,6 @@ public class Net implements Runnable {
                     socketChannel.keyFor(selector).interestOps(SelectionKey.OP_WRITE);
                     messageReady = false;
                 }
-
                 selector.select();
                 for (SelectionKey key : selector.selectedKeys()) {
                     selector.selectedKeys().remove(key);
@@ -64,6 +59,7 @@ public class Net implements Runnable {
             disconnectFromServer();
         }
         catch(Exception e){
+            e.printStackTrace();
             System.err.println(ERROR_IN_COMMUNICATION);
         }
     }
@@ -71,7 +67,7 @@ public class Net implements Runnable {
     public void newConnection(String host, CommunicationListener communicationListener) {
         this.communicationListener = communicationListener;
         serverAddress = new InetSocketAddress(host, PORT_NUMBER);
-        ForkJoinPool.commonPool().execute(this);
+        new Thread(this).start();
 
     }
 
@@ -113,7 +109,7 @@ public class Net implements Runnable {
     public void sendMessage(String message) {
         String messageWithLengthHeader = MessageHandler.addHeaderLength(message);
         synchronized (messagesWaitingToBeSent) {
-            messagesWaitingToBeSent.add(messageWithLengthHeader);
+            messagesWaitingToBeSent.add(ByteBuffer.wrap(messageWithLengthHeader.getBytes()));
         }
         messageReady = true;
         selector.wakeup();
@@ -122,13 +118,12 @@ public class Net implements Runnable {
     private void sendMessageToServer (SelectionKey key) throws IOException {
         ByteBuffer message;
         synchronized (messagesWaitingToBeSent) {
-            message = ByteBuffer.wrap(messagesWaitingToBeSent.peek().getBytes());
-            while(message != null) {
+            while((message = messagesWaitingToBeSent.peek()) != null) {
                 socketChannel.write(message);
                 if(message.hasRemaining()){
                     return;
                 }
-                messagesWaitingToBeSent.remove();
+                messagesWaitingToBeSent.remove(message);
             }
             key.interestOps(SelectionKey.OP_READ);
         }
@@ -155,23 +150,17 @@ public class Net implements Runnable {
 
     private void notifyConnectionDone(InetSocketAddress connectedAddress) {
         Executor pool = ForkJoinPool.commonPool();
-        for (CommunicationListener listener : listeners) {
-            pool.execute(() -> listener.connected(connectedAddress));
-        }
+        pool.execute(() -> communicationListener.connected(connectedAddress));
     }
 
     private void notifyDisconnectionDone() {
         Executor pool = ForkJoinPool.commonPool();
-        for (CommunicationListener listener : listeners) {
-            pool.execute(listener::disconnected);
-        }
+        pool.execute(communicationListener::disconnected);
     }
 
     private void notifyMessageReceived(String msg) {
         Executor pool = ForkJoinPool.commonPool();
-        for (CommunicationListener listener : listeners) {
-            pool.execute(() -> listener.recvdMsg(msg));
-        }
+        pool.execute(() -> communicationListener.receivedMsg(msg));
     }
 
 }
