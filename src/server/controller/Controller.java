@@ -19,9 +19,7 @@ public class Controller {
     }
 
     public String newGame(String name) throws IOException, ClassNotFoundException {
-        System.out.println("Shoutout from line 22, controller");
         gameHandler = new GameHandler();
-        System.out.println("Shoutout from line 24, controller, gameHandler = new GameHandler();");
         return gameHandler.newGame(name);
     }
 
