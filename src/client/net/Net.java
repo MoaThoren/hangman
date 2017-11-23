@@ -1,6 +1,8 @@
 package client.net;
 
 
+import Common.MessageHandler;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -147,9 +149,6 @@ public class Net implements Runnable {
         }
     }
 
-    private void notifyMessageReceived(String message) {
-
-    }
 
     private String extractMessageFromBuffer() {
         receivedFromServer.flip();
@@ -172,7 +171,7 @@ public class Net implements Runnable {
         }
     }
 
-    private void notifyMsgReceived(String msg) {
+    private void notifyMessageReceived(String msg) {
         Executor pool = ForkJoinPool.commonPool();
         for (CommunicationListener listener : listeners) {
             pool.execute(() -> listener.recvdMsg(msg));
