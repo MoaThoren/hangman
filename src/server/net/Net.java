@@ -35,18 +35,23 @@ class Net {
                 if (sendAll)
                     sendAll();
                 selector.select();
+                System.out.println("Shoutout from line 38, selector.select();");
                 Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
                 while (iterator.hasNext()) {
                     SelectionKey key = iterator.next();
                     iterator.remove();
                     if (!key.isValid())
                         continue;
-                    if (key.isAcceptable())
+                    if (key.isAcceptable()) {
+                        System.out.println("Shoutout from line 46, if (key.isAcceptable()) {");
                         acceptClient(key);
-                    else if (key.isReadable())
+                    } else if (key.isReadable()) {
+                        System.out.println("Shoutout from line 49, } else if (key.isReadable()) {");
                         recieveMsg(key);
-                    else if (key.isWritable())
+                    } else if (key.isWritable()) {
+                        System.out.println("Shoutout from line 52, } else if (key.isWritable()) {");
                         sendMsg(key);
+                    }
                 }
             }
         } catch (IOException e) {
@@ -101,10 +106,15 @@ class Net {
     }
 
     void sendMsg(SelectionKey key) throws IOException {
+        System.out.println("Shoutout from line 109, void sendMsg(SelectionKey key) throws IOException {");
         Client client = (Client) key.attachment();
         try {
+            System.out.println("Shoutout from line 112, Client client = (Client) key.attachment();\n" +
+                    "        try {");
             client.sendAll();
+            System.out.println("Shoutout from line 114, client.sendAll();");
             key.interestOps(SelectionKey.OP_READ);
+            System.out.println("Shoutout from line 116, key.interestOps(SelectionKey.OP_READ);");
         } catch (MessageException couldNotSendAllMessages) {
         } catch (IOException clientHasClosedConnection) {
                             client.handler.disconnectClient();
@@ -116,6 +126,7 @@ class Net {
         ByteBuffer bufferedMsg = ByteBuffer.wrap(msg.getBytes());
         synchronized (messagesToSend) {
             messagesToSend.add(bufferedMsg);
+            System.out.println("MESSAGES TO SEND: " + messagesToSend.peek().toString());
         }
         selector.wakeup();
     }
@@ -136,8 +147,11 @@ class Net {
 
         private void sendAll() throws IOException, MessageException {
             ByteBuffer msg;
+            System.out.println("Shoutout from line 148, private void sendAll() throws IOException, MessageException {");
             synchronized (messagesToSend) {
+                System.out.println("Shoutout from line 150, synchronized (messagesToSend) {");
                 while ((msg = messagesToSend.peek()) != null) {
+                    System.out.println("Shoutout from line 152, while ((msg = messagesToSend.peek()) != null) {");
                     handler.sendMsg(msg);
                     messagesToSend.remove();
                 }

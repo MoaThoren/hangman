@@ -19,6 +19,7 @@ public class GameHandler {
     }
 
     public String newGame(String name) throws IOException {
+        System.out.println("Shoutout from line 22, gamehandler, leaderboardAccess.addScore(name);");
         leaderboardAccess.addScore(name);
         this.name = name;
         return "The word is " + word.length() + " characters long, meaning you have " + word.length() + " tries.\nPlease enter a letter:";

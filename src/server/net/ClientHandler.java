@@ -22,7 +22,9 @@ class ClientHandler implements Runnable {
     ClientHandler(Net net, SocketChannel clientChannel) {
         server = net;
         this.clientChannel = clientChannel;
+        System.out.println("Shoutout from line 25, handler, this.clientChannel = clientChannel;");
         initGame();
+        System.out.println("Shoutout from line 27, handler, initGame();");
     }
 
     @Override
@@ -36,14 +38,19 @@ class ClientHandler implements Runnable {
 
     private void initGame() {
         try {
+            System.out.println("Shoutout from line 41, handler, private void initGame() {\n" +
+                    "        try {");
             server.queueMsgToSend(controller.newGame("anon"));
+            System.out.println("Shoutout from line 43, handler, server.queueMsgToSend(controller.newGame(\"anon\"));");
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
 
     void sendMsg(ByteBuffer msg) throws MessageException, IOException {
+        System.out.println("Shoutout from line 46, handler, void sendMsg(ByteBuffer msg) throws MessageException, IOException {");
         clientChannel.write(msg);
+        System.out.println("Shoutout from line 48, handler");
         if (msg.hasRemaining()) {
             throw new MessageException("Could not send message");
         }

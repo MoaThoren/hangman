@@ -26,7 +26,6 @@ public class Net implements Runnable {
     private MessageHandler messageHandler = new MessageHandler();
     private int PORT_NUMBER = 5555;
     private CommunicationListener communicationListener;
-    private final List<CommunicationListener> listeners = new ArrayList<>();
     private final Queue<String> messagesWaitingToBeSent = new ArrayDeque<>();
     private volatile boolean messageReady = true;
     private final ByteBuffer receivedFromServer = ByteBuffer.allocateDirect(Constants.MAX_MSG_LENGTH);
@@ -155,23 +154,17 @@ public class Net implements Runnable {
 
     private void notifyConnectionDone(InetSocketAddress connectedAddress) {
         Executor pool = ForkJoinPool.commonPool();
-        for (CommunicationListener listener : listeners) {
-            pool.execute(() -> listener.connected(connectedAddress));
-        }
+        pool.execute(() -> communicationListener.connected(connectedAddress));
     }
 
     private void notifyDisconnectionDone() {
         Executor pool = ForkJoinPool.commonPool();
-        for (CommunicationListener listener : listeners) {
-            pool.execute(listener::disconnected);
-        }
+        pool.execute(communicationListener::disconnected);
     }
 
     private void notifyMessageReceived(String msg) {
         Executor pool = ForkJoinPool.commonPool();
-        for (CommunicationListener listener : listeners) {
-            pool.execute(() -> listener.recvdMsg(msg));
-        }
+        pool.execute(() -> communicationListener.recvdMsg(msg));
     }
 
 }
