@@ -1,6 +1,7 @@
 package server.net;
 
 import common.MessageException;
+import common.MessageHandler;
 import server.controller.Controller;
 
 import java.io.IOException;
@@ -21,6 +22,7 @@ class Net {
     private Controller controller = new Controller();
     private Boolean sendAll = false;
     private Selector selector;
+    private volatile boolean timeToBroadcast = false;
 
     public static void main(String[] args) {
         new Net().run();
@@ -32,8 +34,10 @@ class Net {
             initRecieve();
 
             while (true) {
-                if (sendAll)
+                if (sendAll) {
                     sendAll();
+                    sendAll = false;
+                }
                 selector.select();
                 System.out.println("Shoutout from line 38, selector.select();");
                 Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
@@ -126,23 +130,16 @@ class Net {
         ByteBuffer bufferedMsg = ByteBuffer.wrap(msg.getBytes());
         synchronized (messagesToSend) {
             messagesToSend.add(bufferedMsg);
-            System.out.println("MESSAGES TO SEND: " + messagesToSend.peek().toString());
         }
         selector.wakeup();
     }
+    
 
     private class Client {
         private final ClientHandler handler;
-        private final Queue<ByteBuffer> messagesToSend = new ArrayDeque<>();
 
         private Client(ClientHandler handler) {
             this.handler = handler;
-        }
-
-        private void queueMsgToSend(ByteBuffer msg) {
-            synchronized (messagesToSend) {
-                messagesToSend.add(msg.duplicate());
-            }
         }
 
         private void sendAll() throws IOException, MessageException {
@@ -153,9 +150,14 @@ class Net {
                 while ((msg = messagesToSend.peek()) != null) {
                     System.out.println("Shoutout from line 152, while ((msg = messagesToSend.peek()) != null) {");
                     handler.sendMsg(msg);
+                    System.out.println("Shoutout from line 153");
                     messagesToSend.remove();
+                    System.out.println("Shoutout from line 155");
                 }
             }
         }
     }
+
 }
+
+

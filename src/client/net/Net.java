@@ -27,7 +27,7 @@ public class Net implements Runnable {
     private int PORT_NUMBER = 5555;
     private CommunicationListener communicationListener;
     private final Queue<String> messagesWaitingToBeSent = new ArrayDeque<>();
-    private volatile boolean messageReady = true;
+    private volatile boolean messageReady = false;
     private final ByteBuffer receivedFromServer = ByteBuffer.allocateDirect(Constants.MAX_MSG_LENGTH);
     private String ERROR_IN_COMMUNICATION = "Connection has been lost, please try again later";
     private String DISCONNECT_MESSAGE = "EXIT_GAME";
@@ -43,19 +43,25 @@ public class Net implements Runnable {
                 if (messageReady) {
                     socketChannel.keyFor(selector).interestOps(SelectionKey.OP_WRITE);
                     messageReady = false;
+                    System.out.println("hejpådighejhejhej");
                 }
-
                 selector.select();
                 for (SelectionKey key : selector.selectedKeys()) {
+                    System.out.println("hejhej");
                     selector.selectedKeys().remove(key);
+                    System.out.println("tja");
                     if (!key.isValid()) {
+                        System.out.println("hejsan");
                         continue;
                     }
                     if (key.isConnectable()) {
+                        System.out.println("hejpådig");
                         finishConnection(key);
                     } else if (key.isReadable()) {
+                        System.out.println("tjena");
                         messageFromServer();
                     } else if (key.isWritable()) {
+                        System.out.println("tjabba");
                         sendMessageToServer(key);
                     }
                 }
@@ -70,7 +76,7 @@ public class Net implements Runnable {
     public void newConnection(String host, CommunicationListener communicationListener) {
         this.communicationListener = communicationListener;
         serverAddress = new InetSocketAddress(host, PORT_NUMBER);
-        ForkJoinPool.commonPool().execute(this);
+        new Thread(this).start();
 
     }
 

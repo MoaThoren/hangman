@@ -35,6 +35,7 @@ public class MessageHandler {
     public synchronized String appendReceivedString(String receivedMessage) {
         String[] splitAfterLength = receivedMessage.split(MSG_LEN_DELIMITER);
         if(splitAfterLength.length < 2) {
+            System.out.println(receivedMessage);
             return WHOLE_MESSAGE_NOT_RECEIVED;
         }
         int statedLength = Integer.parseInt(splitAfterLength[0]);
