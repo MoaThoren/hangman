@@ -1,4 +1,4 @@
-package server.net;
+package common;
 
 class MessageException extends Exception {
     private String message;
