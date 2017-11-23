@@ -41,26 +41,24 @@ public class Net implements Runnable {
                 if (messageReady) {
                     socketChannel.keyFor(selector).interestOps(SelectionKey.OP_WRITE);
                     messageReady = false;
-                    System.out.println("hejpådighejhejhej");
+                    System.out.println("messageReady");
                 }
                 selector.select();
                 for (SelectionKey key : selector.selectedKeys()) {
-                    System.out.println("hejhej");
                     selector.selectedKeys().remove(key);
-                    System.out.println("tja");
                     if (!key.isValid()) {
-                        System.out.println("hejsan");
                         continue;
                     }
                     if (key.isConnectable()) {
-                        System.out.println("hejpådig");
+                        System.out.println("connectable");
                         finishConnection(key);
                     } else if (key.isReadable()) {
-                        System.out.println("tjena");
+                        System.out.println("readable");
                         messageFromServer();
                     } else if (key.isWritable()) {
-                        System.out.println("tjabba");
+                        System.out.println("writable");
                         sendMessageToServer(key);
+                        System.out.println("writable2");
                     }
                 }
             }
@@ -126,8 +124,7 @@ public class Net implements Runnable {
     private void sendMessageToServer (SelectionKey key) throws IOException {
         ByteBuffer message;
         synchronized (messagesWaitingToBeSent) {
-            message = messagesWaitingToBeSent.peek();
-            while(message != null) {
+            while((message = messagesWaitingToBeSent.peek()) != null) {
                 socketChannel.write(message);
                 if(message.hasRemaining()){
                     return;
