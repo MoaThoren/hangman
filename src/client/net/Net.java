@@ -25,7 +25,7 @@ public class Net implements Runnable {
     private InetSocketAddress serverAddress;
     private MessageHandler messageHandler = new MessageHandler();
     private int PORT_NUMBER = 5555;
-    //private CommunicationHandler outputhandler;
+    private CommunicationListener communicationListener;
     private final List<CommunicationListener> listeners = new ArrayList<>();
     private final Queue<String> messagesWaitingToBeSent = new ArrayDeque<>();
     private volatile boolean messageReady = true;
@@ -37,7 +37,7 @@ public class Net implements Runnable {
     @Override
     public void run() {
         try {
-            newConnection(HOST_IP);
+            startConnection();
             initSelector();
 
             while (connected || !messagesWaitingToBeSent.isEmpty()) {
@@ -55,7 +55,7 @@ public class Net implements Runnable {
                     if (key.isConnectable()) {
                         finishConnection(key);
                     } else if (key.isReadable()) {
-                        messageFromServer(key);
+                        messageFromServer();
                     } else if (key.isWritable()) {
                         sendMessageToServer(key);
                     }
@@ -68,13 +68,13 @@ public class Net implements Runnable {
         }
     }
 
-    private void newConnection(String host) {
+    public void newConnection(String host, CommunicationListener communicationListener) {
+        this.communicationListener = communicationListener;
         serverAddress = new InetSocketAddress(host, PORT_NUMBER);
         ForkJoinPool.commonPool().execute(this);
 
     }
 
-    // Denna vet jag inte om ni tänkt skulle vara i disconnectFromServer() rad 77 eller inte så lämnar den så här.
     public void sendDisconnectMessage() throws IOException {
         connected = false;
         sendMessage(DISCONNECT_MESSAGE);
@@ -83,6 +83,7 @@ public class Net implements Runnable {
     private void disconnectFromServer() throws IOException {
         socketChannel.close();
         socketChannel.keyFor(selector).cancel();
+        notifyDisconnectionDone();
     }
 
     private void initSelector() throws IOException {
@@ -90,8 +91,7 @@ public class Net implements Runnable {
         socketChannel.register(selector, SelectionKey.OP_CONNECT);
     }
 
-    //Används inte
-    public void startConnection() throws IOException {
+    private void startConnection() throws IOException {
         socketChannel = SocketChannel.open();
         socketChannel.configureBlocking(false);
         socketChannel.connect(serverAddress);
@@ -110,7 +110,7 @@ public class Net implements Runnable {
         }
     }
 
-    private void sendMessage(String message) {
+    public void sendMessage(String message) {
         String messageWithLengthHeader = MessageHandler.addHeaderLength(message);
         synchronized (messagesWaitingToBeSent) {
             messagesWaitingToBeSent.add(messageWithLengthHeader);
@@ -134,16 +134,15 @@ public class Net implements Runnable {
         }
     }
 
-    private void messageFromServer(SelectionKey key) throws IOException {
+    private void messageFromServer() throws IOException {
         receivedFromServer.clear();
         int readBytes = socketChannel.read(receivedFromServer);
         if (readBytes == -1) {
             throw new IOException(ERROR_IN_COMMUNICATION);
         }
         String stringFromServer = extractMessageFromBuffer();
-        //MessageHandler stuff som behövs eller som ni får göra om.
-        String extracedMessage = messageHandler.appendReceivedString(stringFromServer);
-        notifyMessageReceived(extracedMessage);
+        String extractedMessage = messageHandler.appendReceivedString(stringFromServer);
+        notifyMessageReceived(extractedMessage);
     }
 
 

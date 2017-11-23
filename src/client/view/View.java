@@ -1,9 +1,11 @@
 package client.view;
 
 import client.controller.Controller;
+import client.net.CommunicationListener;
 import client.net.MessagePrinter;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.Scanner;
 
 class View {
@@ -11,7 +13,22 @@ class View {
     private final String WELCOME_MESSAGE = "*** Welcome to hangman ***";
     private final String NO_IP_MESSAGE = "No host IP given, please launch with IP argument. E.g. > java hangman 127.0.0.1";
     private final String EXIT_MESSAGE = "exit game";
-    private final MessagePrinter messagePrinter = this::printOut;
+    private final CommunicationListener communicationListener = new CommunicationListener() {
+        @Override
+        public void recvdMsg(String msg) {
+            printOut(msg);
+        }
+
+        @Override
+        public void connected(InetSocketAddress serverAddress) {
+            printOut("Connected to: " + serverAddress.toString());
+        }
+
+        @Override
+        public void disconnected() {
+            printOut("Disconnected");
+        }
+    };
     private String SERVER_IP = "127.0.0.1";
 
     public static void main(String[] args) {
@@ -28,7 +45,7 @@ class View {
     private void gameCommunication(String host) {
         Scanner sc = new Scanner(System.in);
         try {
-            controller.newConnection(host, messagePrinter);
+            controller.newConnection(host, communicationListener);
             System.out.println("Connected to: " + host);
         } catch (IOException e) {
             System.out.println("Couldn't create a new connection...\nPlease restart client and try again.");
