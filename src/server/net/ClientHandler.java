@@ -7,6 +7,8 @@ import server.controller.Controller;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.util.ArrayDeque;
+import java.util.Queue;
 import java.util.concurrent.ForkJoinPool;
 
 import static common.Constants.MAX_MSG_LENGTH;
@@ -18,8 +20,10 @@ class ClientHandler implements Runnable {
     private Controller controller  = new Controller();
     private Net server;
     private String answer;
+    public final Queue<ByteBuffer> messagesToSend;
 
     ClientHandler(Net net, SocketChannel clientChannel) {
+        messagesToSend  = new ArrayDeque<>();
         server = net;
         this.clientChannel = clientChannel;
         initGame();
@@ -28,7 +32,7 @@ class ClientHandler implements Runnable {
     @Override
     public void run() {
         try {
-            server.queueMsgToSend(controller.checkString(answer));
+            server.queueMsgToSend(this, controller.checkString(answer));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -36,7 +40,7 @@ class ClientHandler implements Runnable {
 
     private void initGame() {
         try {
-            server.queueMsgToSend(controller.newGame("anon"));
+            server.queueMsgToSend(this, controller.newGame("anon"));
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
