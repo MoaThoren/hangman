@@ -1,9 +1,9 @@
-package server.net;
+package common;
 
-class MessageException extends Exception {
+public class MessageException extends Exception {
     private String message;
 
-    MessageException(String message) {
+    public MessageException(String message) {
         this.message = message;
     }
 
