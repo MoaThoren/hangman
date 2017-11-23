@@ -28,7 +28,6 @@ class ClientHandler implements Runnable {
     @Override
     public void run() {
         try {
-            System.out.println();
             server.queueMsgToSend(controller.checkString(answer));
         } catch (IOException e) {
             e.printStackTrace();
@@ -55,7 +54,6 @@ class ClientHandler implements Runnable {
         int numOfReadBytes = clientChannel.read(msgFromClient);
         if (numOfReadBytes == -1)
             throw new IOException("Client has closed connection.");
-        System.out.println("Hello I'm here");
         answer = extractMessageFromBuffer();
         System.out.println(answer);
         ForkJoinPool.commonPool().execute(this);

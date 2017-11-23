@@ -124,6 +124,7 @@ class Net {
         synchronized (messagesToSend) {
             messagesToSend.add(bufferedMsg);
         }
+        sendAll = true;
         selector.wakeup();
     }
     
