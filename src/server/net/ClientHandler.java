@@ -50,20 +50,22 @@ class ClientHandler implements Runnable {
         }
     }
 
-    void receiveMsg() throws IOException {
+    void receiveMsg() throws IOException, MessageException {
         msgFromClient.clear();
         int numOfReadBytes = clientChannel.read(msgFromClient);
         if (numOfReadBytes == -1)
             throw new IOException("Client has closed connection.");
+        System.out.println("Hello I'm here");
         answer = extractMessageFromBuffer();
+        System.out.println(answer);
         ForkJoinPool.commonPool().execute(this);
     }
 
-    private String extractMessageFromBuffer() {
+    private String extractMessageFromBuffer() throws MessageException {
         msgFromClient.flip();
         byte[] bytes = new byte[msgFromClient.remaining()];
         msgFromClient.get(bytes);
-        return new String(bytes);
+        return MessageHandler.extractMsg(new String(bytes));
     }
 
     void disconnectClient() throws IOException {

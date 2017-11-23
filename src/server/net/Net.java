@@ -56,6 +56,8 @@ class Net {
             }
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (MessageException e) {
+            System.out.println(e.getMessage());
         }
     }
 
@@ -95,7 +97,7 @@ class Net {
         }
     }
 
-    void recieveMsg(SelectionKey key) throws IOException {
+    void recieveMsg(SelectionKey key) throws IOException, MessageException {
         Client client = (Client) key.attachment();
         try {
             client.handler.receiveMsg();
