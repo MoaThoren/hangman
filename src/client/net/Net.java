@@ -24,7 +24,7 @@ public class Net implements Runnable {
     private MessageHandler messageHandler = new MessageHandler();
     private int PORT_NUMBER = 5555;
     private CommunicationListener communicationListener;
-    private final Queue<String> messagesWaitingToBeSent = new ArrayDeque<>();
+    private final Queue<ByteBuffer> messagesWaitingToBeSent = new ArrayDeque<>();
     private volatile boolean messageReady = false;
     private final ByteBuffer receivedFromServer = ByteBuffer.allocateDirect(Constants.MAX_MSG_LENGTH);
     private String ERROR_IN_COMMUNICATION = "Connection has been lost, please try again later";
@@ -67,6 +67,7 @@ public class Net implements Runnable {
             disconnectFromServer();
         }
         catch(Exception e){
+            e.printStackTrace();
             System.err.println(ERROR_IN_COMMUNICATION);
         }
     }
@@ -116,7 +117,7 @@ public class Net implements Runnable {
     public void sendMessage(String message) {
         String messageWithLengthHeader = MessageHandler.addHeaderLength(message);
         synchronized (messagesWaitingToBeSent) {
-            messagesWaitingToBeSent.add(messageWithLengthHeader);
+            messagesWaitingToBeSent.add(ByteBuffer.wrap(messageWithLengthHeader.getBytes()));
         }
         messageReady = true;
         selector.wakeup();
@@ -125,13 +126,13 @@ public class Net implements Runnable {
     private void sendMessageToServer (SelectionKey key) throws IOException {
         ByteBuffer message;
         synchronized (messagesWaitingToBeSent) {
-            message = ByteBuffer.wrap(messagesWaitingToBeSent.peek().getBytes());
+            message = messagesWaitingToBeSent.peek();
             while(message != null) {
                 socketChannel.write(message);
                 if(message.hasRemaining()){
                     return;
                 }
-                messagesWaitingToBeSent.remove();
+                messagesWaitingToBeSent.remove(message);
             }
             key.interestOps(SelectionKey.OP_READ);
         }
