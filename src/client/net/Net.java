@@ -1,7 +1,7 @@
 package client.net;
 
 
-import Common.MessageHandler;
+import common.MessageHandler;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
