@@ -1,6 +1,7 @@
 package client.net;
 
 
+import common.Constants;
 import common.MessageHandler;
 
 import java.io.IOException;

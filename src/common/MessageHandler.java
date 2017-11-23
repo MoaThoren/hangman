@@ -1,7 +1,5 @@
 package common;
 
-import client.net.Constants;
-
 import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.StringJoiner;
@@ -19,7 +17,7 @@ public class MessageHandler {
         return join.add(Integer.toString(msg.length())).add(msg).toString();
     }
 
-    public static String extractMsg(String received) throws MessageException {
+    public static String extractMsg(String received) throws common.MessageException {
         String[] msg = received.split(MSG_LEN_DELIMITER);
         if(msg[MSG_BODY_INDEX].length() != Integer.parseInt(msg[MSG_TYPE_INDEX]))
             throw new MessageException(MSG_RECEIVED_ERROR);
@@ -40,11 +38,11 @@ public class MessageHandler {
             return WHOLE_MESSAGE_NOT_RECEIVED;
         }
         int statedLength = Integer.parseInt(splitAfterLength[0]);
-        String
-        if(!measureLength(statedLength, )) {
-
+        String message = splitAfterLength[1];
+        if(!measureLength(statedLength, message.length() )) {
+            return WHOLE_MESSAGE_NOT_RECEIVED;
         }
-
+        return message;
     }
 
     private boolean measureLength(int statedLength, int actualLength) {
