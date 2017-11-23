@@ -1,5 +1,6 @@
 package server.net;
 
+import common.MessageException;
 import server.controller.Controller;
 
 import java.io.IOException;
