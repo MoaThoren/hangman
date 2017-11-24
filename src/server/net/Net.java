@@ -7,9 +7,7 @@ import java.io.IOException;
 import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
-import java.util.ArrayDeque;
 import java.util.Iterator;
-import java.util.Queue;
 
 import static common.Constants.PORT_NUMBER;
 
@@ -17,8 +15,11 @@ class Net {
     private final int LINGER_TIME = 0;
     private final String EXIT_MESSAGE = "exit game";
     private final String FORCE_EXIT_MESSAGE = "force close game";
+<<<<<<< HEAD
     private final String NEW_USER_MESSAGE = "Please enter your name:\n";
     private final Queue<ByteBuffer> messagesToSend = new ArrayDeque<>();
+=======
+>>>>>>> develop
     private ServerSocketChannel listeningSocketChannel;
     private Boolean sendAll = false;
     private Selector selector;
@@ -123,10 +124,10 @@ class Net {
                         }
     }
 
-    void queueMsgToSend(String msg) {
+    void queueMsgToSend(ClientHandler clientHandler, String msg) {
         ByteBuffer bufferedMsg = ByteBuffer.wrap(MessageHandler.addHeaderLength(msg).getBytes());
-        synchronized (messagesToSend) {
-            messagesToSend.add(bufferedMsg);
+        synchronized (clientHandler.messagesToSend) {
+            clientHandler.messagesToSend.add(bufferedMsg);
         }
         sendAll = true;
         selector.wakeup();
@@ -142,10 +143,10 @@ class Net {
 
         private void sendAll() throws IOException, MessageException {
             ByteBuffer msg;
-            synchronized (messagesToSend) {
-                while ((msg = messagesToSend.peek()) != null) {
+            synchronized (handler.messagesToSend) {
+                while ((msg = handler.messagesToSend.peek()) != null) {
                     handler.sendMsg(msg);
-                    messagesToSend.remove();
+                    handler.messagesToSend.remove();
                 }
             }
         }
