@@ -20,27 +20,23 @@ class ClientHandler implements Runnable {
     private Controller controller  = new Controller();
     private Net server;
     private String answer;
-    public final Queue<ByteBuffer> messagesToSend;
+    private boolean first_run = true;
+    final Queue<ByteBuffer> messagesToSend;
 
     ClientHandler(Net net, SocketChannel clientChannel) {
         messagesToSend  = new ArrayDeque<>();
         server = net;
         this.clientChannel = clientChannel;
-        initGame();
     }
 
     @Override
     public void run() {
         try {
+            if(first_run) {
+                server.queueMsgToSend(this, controller.newGame(answer));
+                first_run = false;
+            } else
             server.queueMsgToSend(this, controller.checkString(answer));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void initGame() {
-        try {
-            server.queueMsgToSend(this, controller.newGame("anon"));
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }

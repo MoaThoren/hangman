@@ -15,6 +15,7 @@ class Net {
     private final int LINGER_TIME = 0;
     private final String EXIT_MESSAGE = "exit game";
     private final String FORCE_EXIT_MESSAGE = "force close game";
+    private final String NEW_USER_MESSAGE = "Please enter your name:\n";
     private ServerSocketChannel listeningSocketChannel;
     private Boolean sendAll = false;
     private Selector selector;
@@ -77,7 +78,7 @@ class Net {
         }
     }
 
-    void acceptClient(SelectionKey key) {
+    void acceptClient(SelectionKey key) throws MessageException {
         ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
         try {
             SocketChannel clientChannel = serverSocketChannel.accept();
@@ -85,11 +86,16 @@ class Net {
             ClientHandler handler = new ClientHandler(this, clientChannel);
             clientChannel.register(selector, SelectionKey.OP_WRITE, new Client(handler));
             clientChannel.setOption(StandardSocketOptions.SO_LINGER, LINGER_TIME);
+            askForName(handler);
         } catch (ClosedChannelException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    void askForName(ClientHandler handler) throws IOException, MessageException {
+        handler.sendMsg(ByteBuffer.wrap(MessageHandler.addHeaderLength(NEW_USER_MESSAGE).getBytes()));
     }
 
     void recieveMsg(SelectionKey key) throws IOException, MessageException {
