@@ -15,11 +15,7 @@ class Net {
     private final int LINGER_TIME = 0;
     private final String EXIT_MESSAGE = "exit game";
     private final String FORCE_EXIT_MESSAGE = "force close game";
-<<<<<<< HEAD
     private final String NEW_USER_MESSAGE = "Please enter your name:\n";
-    private final Queue<ByteBuffer> messagesToSend = new ArrayDeque<>();
-=======
->>>>>>> develop
     private ServerSocketChannel listeningSocketChannel;
     private Boolean sendAll = false;
     private Selector selector;
