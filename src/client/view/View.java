@@ -12,6 +12,7 @@ class View {
     private final String WELCOME_MESSAGE = "*** Welcome to hangman ***";
     private final String NO_IP_MESSAGE = "No host IP given, please launch with IP argument. E.g. > java hangman 127.0.0.1";
     private final String EXIT_MESSAGE = "exit game";
+    private String SERVER_IP = "127.0.0.1";
     private final CommunicationListener communicationListener = new CommunicationListener() {
         @Override
         public void receivedMsg(String msg) {
@@ -28,7 +29,6 @@ class View {
             printOut("Disconnected");
         }
     };
-    private String SERVER_IP = "127.0.0.1";
 
     public static void main(String[] args) {
         View view = new View();

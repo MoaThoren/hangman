@@ -18,25 +18,21 @@ class ClientHandler implements Runnable {
     private Controller controller  = new Controller();
     private Net server;
     private String answer;
+    private boolean first_run = true;
 
     ClientHandler(Net net, SocketChannel clientChannel) {
         server = net;
         this.clientChannel = clientChannel;
-        initGame();
     }
 
     @Override
     public void run() {
         try {
+            if(first_run) {
+                server.queueMsgToSend(controller.newGame(answer));
+                first_run = false;
+            } else
             server.queueMsgToSend(controller.checkString(answer));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void initGame() {
-        try {
-            server.queueMsgToSend(controller.newGame("anon"));
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
